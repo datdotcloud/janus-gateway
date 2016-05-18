@@ -1,0 +1,15 @@
+[Unit]
+Description=janus daemon
+After=network.target
+
+[Service]
+Type=simple
+User=janus
+Group=janus
+WorkingDirectory=/opt/janus
+ExecStart=/opt/janus/bin/janus -u -F /opt/janus/etc/janus/
+#ExecStop=/bin/kill -15 $MAINPID
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
