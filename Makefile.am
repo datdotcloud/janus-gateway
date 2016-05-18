@@ -18,6 +18,8 @@ AM_CFLAGS += -Wno-override-init  # we need this for JANUS_PLUGIN_INIT and JANUS_
 # AM_CFLAGS += -Wshadow -Wstrict-aliasing=2
 
 AM_CFLAGS += -fstack-protector-all -g -ggdb -fPIC -rdynamic -pthread
+AM_CFLAGS += $(MYSQL_CFLAGS)
+AM_LDFLAGS = $(MYSQL_LDFLAGS)
 
 # FIXME: make docs work with distcheck
 DISTCHECK_CONFIGURE_FLAGS = --disable-docs --enable-post-processing
@@ -265,6 +267,16 @@ EXTRA_DIST += \
 	conf/janus.plugin.streaming.cfg.sample.in \
 	$(stream_DATA)
 CLEANFILES += conf/janus.plugin.streaming.cfg.sample
+endif
+
+if ENABLE_PLUGIN_PLEX
+plugin_LTLIBRARIES += plugins/libjanus_plex.la
+plugins_libjanus_plex_la_SOURCES = plugins/plex/plex.c \
+	plugins/plex/plugin_description.c \
+	plugins/plex/mysql_db.c
+plugins_libjanus_plex_la_CFLAGS = $(plugins_cflags) -I.. $(MYSQL_CFLAGS)
+plugins_libjanus_plex_la_LDFLAGS = $(plugins_ldflags) $(MYSQL_LDFLAGS)
+plugins_libjanus_plex_la_LIBADD = $(plugins_libadd)
 endif
 
 if ENABLE_PLUGIN_VIDEOCALL

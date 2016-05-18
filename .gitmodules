@@ -1,0 +1,3 @@
+[submodule "plugins/plex"]
+	path = plugins/plex
+	url = https://github.com/WatchBeam/plex_janus_plugin.git

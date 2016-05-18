@@ -247,6 +247,7 @@ AC_CHECK_LIB([rabbitmq],
                      [AC_MSG_ERROR([rabbitmq-c not found. See README.md for installation instructions or use --disable-rabbitmq])])
              ])
 AM_CONDITIONAL([ENABLE_RABBITMQ], [test "x$enable_rabbitmq" = "xyes"])
+AX_LIB_MYSQL(,,AC_MSG_ERROR("Can't find mysql library" ))
 
 AC_TRY_COMPILE([
                #include <stdlib.h>
@@ -329,6 +330,11 @@ AC_ARG_ENABLE([plugin-voicemail],
                               [Disable voicemail plugin])],
               [],
               [enable_plugin_voicemail=yes])
+AC_ARG_ENABLE([plugin-plex],
+							              [AS_HELP_STRING([--disable-plugin-plex],
+							                              [Disable plex plugin])],
+							              [],
+							              [enable_plugin_plex=yes])
 
 PKG_CHECK_MODULES([OPUS],
                   [opus],
@@ -354,6 +360,7 @@ AM_CONDITIONAL([ENABLE_PLUGIN_STREAMING], [test "x$enable_plugin_streaming" = "x
 AM_CONDITIONAL([ENABLE_PLUGIN_VIDEOCALL], [test "x$enable_plugin_videocall" = "xyes"])
 AM_CONDITIONAL([ENABLE_PLUGIN_VIDEOROOM], [test "x$enable_plugin_videoroom" = "xyes"])
 AM_CONDITIONAL([ENABLE_PLUGIN_VOICEMAIL], [test "x$enable_plugin_voicemail" = "xyes"])
+AM_CONDITIONAL([ENABLE_PLUGIN_PLEX], [test "x$enable_plugin_plex" = "xyes"])
 
 ##
 # Post-processing
@@ -451,6 +458,9 @@ AM_COND_IF([ENABLE_PLUGIN_VOICEMAIL],
 AM_COND_IF([ENABLE_PLUGIN_RECORDPLAY],
 	[echo "    Record&Play:           yes"],
 	[echo "    Record&Play:           no"])
+AM_COND_IF([ENABLE_PLUGIN_PLEX],
+	[echo "    Plex:                  yes"],
+	[echo "    Plex:                  no"])
 
 echo
 echo "If this configuration is ok for you, do a 'make' to start building Janus. A 'make install' will install Janus and its plugins to the specified prefix. Finally, a 'make configs' will install some sample configuration files too (something you'll only want to do the first time, though)."
