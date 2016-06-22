@@ -7,6 +7,7 @@ if [[ ! -f /etc/systemd/system/multi-user.target.wants/janus.service ]]; then
 echo "Creating systemd symbolic link"
 ln -s /usr/lib/systemd/system/janus.service /etc/systemd/system/multi-user.target.wants/janus.service
 fi
+useradd -G nginx janus
 systemctl daemon-reload
 systemctl restart janus
 

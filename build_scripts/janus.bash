@@ -2,7 +2,7 @@ yum -y install libnice-janus libsrtp-janus libwebsockets-janus mysql mysql-devel
 export PKG_CONFIG_PATH=/opt/janus/lib/pkgconfig/
 #git clone --recursive https://github.com/WatchBeam/janus-gateway.git
 cd ..
-git submodule update --init
+#git submodule update --init
 #need to manually specify path to libwebsockets as configure script isnt using ldconfig for it (FIX ME)
 sh autogen.sh
 PLUGIN_OPTS="--disable-plugin-audiobridge --disable-plugin-echotest --disable-plugin-recordplay --disable-plugin-sip \
