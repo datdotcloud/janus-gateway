@@ -1,4 +1,4 @@
-systemctrl stop janus
+systemctl stop janus
 rm /etc/systemd/system/multi-user.target.wants/janus.service
 rm /usr/lib/systemd/system/janus.service
 ldconfig
