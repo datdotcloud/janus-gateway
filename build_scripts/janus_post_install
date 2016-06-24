@@ -2,12 +2,18 @@
 ldconfig
 #update janus configuration file
 #mv janus.service /usr/lib/systemd/system/
-mv /opt/janus/etc/janus.service /usr/lib/systemd/system/janus.service
+cp /opt/janus/etc/janus.service /usr/lib/systemd/system/janus.service
 if [[ ! -f /etc/systemd/system/multi-user.target.wants/janus.service ]]; then
-echo "Creating systemd symbolic link"
-ln -s /usr/lib/systemd/system/janus.service /etc/systemd/system/multi-user.target.wants/janus.service
+  ln -s /usr/lib/systemd/system/janus.service /etc/systemd/system/multi-user.target.wants/janus.service
 fi
-useradd -G nginx janus
+
+if id janus &>/dev/null; then
+  if ! id -nG janus | grep -qw "nginx"; then 
+    usermod -a -G nginx janus 2>/dev/null
+  fi
+else
+  useradd -G nginx janus 2>/dev/null
+fi
 systemctl daemon-reload
 systemctl restart janus
 
