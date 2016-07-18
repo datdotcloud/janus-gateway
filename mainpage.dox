@@ -1763,7 +1763,10 @@ POST /admin
  * of HTTP to interact with the Admin API. The same considerations already
  * made for the Janus API as to the usage of different transports (WebSockets,
  * RabbitMQ or others) apply here as well, particularly with respect to
- * the explicit \c session_id and \c handle_id in the JSON payload.  
+ * the explicit \c session_id and \c handle_id in the JSON payload. Besides,
+ * to use the Admin API over WebSockets you'll have to use <code>janus-admin-protocol</code>
+ * as the subprotocol, instead of the <code>janus-protocol</code> of the
+ * regular Janus API.
  *
  */
 
@@ -2311,6 +2314,7 @@ ldd janus | grep asan
 
 /*! \page resources Resources
  * This page contains pointers to some third-party resources, in particular
+ * distro repos for an easier installation of Janus, where available,
  * client stacks, libraries and bindings in other languages, that is
  * tools that you find helpful to interact with Janus outside of the
  * context of the \c janus.js JavaScript library we provide. It is not
@@ -2323,6 +2327,19 @@ ldd janus | grep asan
  * or you know any such effort that is not listed here, just let us know
  * and we'll add it on this page.
  * <br/><br/>
+ *
+ * \section repos Distro repositories
+ *
+ * <table class="table table-striped">
+ * <tr><th>Distro</th><th>Author</th><th>Repo</th><th>Description</th></tr>
+ * <tr>
+ * 		<td>Debian/Ubuntu</td>
+ * 		<td><a href="https://github.com/saghul">Saúl Ibarra Corretgé </a></td>
+ * 		<td><a href="http://projects.ag-projects.com/projects/documentation/wiki/Repositories">AG Projects Repo</a></td>
+ *		<td>Debian Jessie, Ubuntu Trusty and Ubuntu Xenial</td>
+ * </tr>
+ * </table>
+ * <br/>
  *
  * \section stacks Client-side stacks
  *
@@ -2405,7 +2422,7 @@ ldd janus | grep asan
  * <tr><th>Author</th><th>Project</th><th>Description</th></tr>
  * <tr>
  * 		<td><a href="https://github.com/nowylie">Nicholas Wylie</a></td>
- * 		<td><a href="https://github.com/nowylie/janus-ud-transport">janus-gateway-rtpbroadcast</a></td>
+ * 		<td><a href="https://github.com/nowylie/janus-ud-transport">janus-ud-transport</a></td>
  * 		<td>Janus transport plugin that adds support for Datagram messages over Unix Domain Sockets</td>
  * </tr>
  * </table>
