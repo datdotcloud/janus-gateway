@@ -104,6 +104,9 @@ static janus_transport_callbacks *gateway = NULL;
 static gboolean http_janus_api_enabled = FALSE;
 static gboolean http_admin_api_enabled = FALSE;
 
+/* JSON serialization options */
+static size_t json_format = JSON_INDENT(3) | JSON_PRESERVE_ORDER;
+
 
 /* Incoming HTTP message */
 typedef struct janus_http_msg {
@@ -551,9 +554,26 @@ int janus_http_init(janus_transport_callbacks *callback, const char *config_path
 		janus_config_print(config);
 
 		/* Handle configuration */
-		
-		/* ... starting with the base paths */
-		janus_config_item *item = janus_config_get_item_drilldown(config, "general", "base_path");
+		janus_config_item *item = janus_config_get_item_drilldown(config, "general", "json");
+		if(item && item->value) {
+			/* Check how we need to format/serialize the JSON output */
+			if(!strcasecmp(item->value, "indented")) {
+				/* Default: indented, we use three spaces for that */
+				json_format = JSON_INDENT(3) | JSON_PRESERVE_ORDER;
+			} else if(!strcasecmp(item->value, "plain")) {
+				/* Not indented and no new lines, but still readable */
+				json_format = JSON_INDENT(0) | JSON_PRESERVE_ORDER;
+			} else if(!strcasecmp(item->value, "compact")) {
+				/* Compact, so no spaces between separators */
+				json_format = JSON_COMPACT | JSON_PRESERVE_ORDER;
+			} else {
+				JANUS_LOG(LOG_WARN, "Unsupported JSON format option '%s', using default (indented)\n", item->value);
+				json_format = JSON_INDENT(3) | JSON_PRESERVE_ORDER;
+			}
+		}
+
+		/* Check the base paths */
+		item = janus_config_get_item_drilldown(config, "general", "base_path");
 		if(item && item->value) {
 			if(item->value[0] != '/') {
 				JANUS_LOG(LOG_FATAL, "Invalid base path %s (it should start with a /, e.g., /janus\n", item->value);
@@ -680,7 +700,7 @@ int janus_http_init(janus_transport_callbacks *callback, const char *config_path
 			if(!server_key || !server_pem) {
 				JANUS_LOG(LOG_FATAL, "Missing certificate/key path\n");
 			} else {
-				int swsport = 8889;
+				int swsport = 8089;
 				item = janus_config_get_item_drilldown(config, "general", "secure_port");
 				if(item && item->value)
 					swsport = atoi(item->value);
@@ -781,7 +801,7 @@ int janus_http_init(janus_transport_callbacks *callback, const char *config_path
 
 	messages = g_hash_table_new(NULL, NULL);
 	janus_mutex_init(&messages_mutex);
-	sessions = g_hash_table_new(NULL, NULL);
+	sessions = g_hash_table_new_full(g_int64_hash, g_int64_equal, (GDestroyNotify)g_free, NULL);
 	old_sessions = NULL;
 	janus_mutex_init(&sessions_mutex);
 	GError *error = NULL;
@@ -888,7 +908,7 @@ int janus_http_send_message(void *transport, void *request_id, gboolean admin, j
 		}
 		guint64 session_id = json_integer_value(s);
 		janus_mutex_lock(&sessions_mutex);
-		janus_http_session *session = g_hash_table_lookup(sessions, GUINT_TO_POINTER(session_id));
+		janus_http_session *session = g_hash_table_lookup(sessions, &session_id);
 		if(session == NULL || session->destroyed) {
 			JANUS_LOG(LOG_ERR, "Can't notify event, no session object...\n");
 			janus_mutex_unlock(&sessions_mutex);
@@ -939,7 +959,7 @@ void janus_http_session_created(void *transport, guint64 session_id) {
 	JANUS_LOG(LOG_VERB, "Session created (%"SCNu64"), create a queue for the long poll\n", session_id);
 	/* Create a queue of events for this session */
 	janus_mutex_lock(&sessions_mutex);
-	if(g_hash_table_lookup(sessions, GUINT_TO_POINTER(session_id)) != NULL) {
+	if(g_hash_table_lookup(sessions, &session_id) != NULL) {
 		JANUS_LOG(LOG_WARN, "Ignoring created session, apparently we're already handling it?\n");
 		janus_mutex_unlock(&sessions_mutex);
 		return;
@@ -947,7 +967,7 @@ void janus_http_session_created(void *transport, guint64 session_id) {
 	janus_http_session *session = g_malloc0(sizeof(janus_http_session));
 	session->events = g_async_queue_new();
 	session->destroyed = 0;
-	g_hash_table_insert(sessions, GUINT_TO_POINTER(session_id), session);
+	g_hash_table_insert(sessions, janus_uint64_dup(session_id), session);
 	janus_mutex_unlock(&sessions_mutex);
 }
 
@@ -958,13 +978,13 @@ void janus_http_session_over(void *transport, guint64 session_id, gboolean timeo
 		timeout ? "has timed out" : "is over", session_id);
 	/* Get rid of the session's queue of events */
 	janus_mutex_lock(&sessions_mutex);
-	janus_http_session *session = g_hash_table_lookup(sessions, GUINT_TO_POINTER(session_id));
+	janus_http_session *session = g_hash_table_lookup(sessions, &session_id);
 	if(session == NULL || session->destroyed) {
 		/* Nothing to do */
 		janus_mutex_unlock(&sessions_mutex);
 		return;
 	}
-	g_hash_table_remove(sessions, GUINT_TO_POINTER(session_id));
+	g_hash_table_remove(sessions, &session_id);
 	/* We leave it to the watchdog to remove the session */
 	session->destroyed = janus_get_monotonic_time();
 	old_sessions = g_list_append(old_sessions, session);
@@ -1015,7 +1035,7 @@ int janus_http_handler(void *cls, struct MHD_Connection *connection, const char 
 	janus_http_msg *msg = (janus_http_msg *)*ptr;
 	if (msg == NULL) {
 		firstround = 1;
-		JANUS_LOG(LOG_VERB, "Got a HTTP %s request on %s...\n", method, url);
+		JANUS_LOG(LOG_DBG, "Got a HTTP %s request on %s...\n", method, url);
 		JANUS_LOG(LOG_DBG, " ... Just parsing headers for now...\n");
 		msg = g_malloc0(sizeof(janus_http_msg));
 		if(msg == NULL) {
@@ -1045,7 +1065,7 @@ int janus_http_handler(void *cls, struct MHD_Connection *connection, const char 
 	}
 	/* Parse request */
 	if (strcasecmp(method, "GET") && strcasecmp(method, "POST") && strcasecmp(method, "OPTIONS")) {
-		ret = janus_http_return_error(msg, 0, NULL, JANUS_ERROR_TRANSPORT_SPECIFIC, "Use GET for the info endpoint");
+		ret = janus_http_return_error(msg, 0, NULL, JANUS_ERROR_TRANSPORT_SPECIFIC, "Unsupported method %s", method);
 		goto done;
 	}
 	if (!strcasecmp(method, "OPTIONS")) {
@@ -1189,7 +1209,7 @@ int janus_http_handler(void *cls, struct MHD_Connection *connection, const char 
 	
 	/* Or maybe a long poll */
 	if(!strcasecmp(method, "GET") || !payload) {
-		session_id = session_path ? g_ascii_strtoll(session_path, NULL, 10) : 0;
+		session_id = session_path ? g_ascii_strtoull(session_path, NULL, 10) : 0;
 		if(session_id < 1) {
 			JANUS_LOG(LOG_ERR, "Invalid session %s\n", session_path);
 			response = MHD_create_response_from_buffer(0, NULL, MHD_RESPMEM_PERSISTENT);
@@ -1268,7 +1288,7 @@ int janus_http_handler(void *cls, struct MHD_Connection *connection, const char 
 			goto done;
 		}
 		janus_mutex_lock(&sessions_mutex);
-		janus_http_session *session = g_hash_table_lookup(sessions, GUINT_TO_POINTER(session_id));
+		janus_http_session *session = g_hash_table_lookup(sessions, &session_id);
 		janus_mutex_unlock(&sessions_mutex);
 		if(!session || session->destroyed) {
 			JANUS_LOG(LOG_ERR, "Couldn't find any session %"SCNu64"...\n", session_id);
@@ -1298,7 +1318,7 @@ int janus_http_handler(void *cls, struct MHD_Connection *connection, const char 
 		if(event != NULL) {
 			if(max_events == 1) {
 				/* Return just this message and leave */
-				gchar *event_text = json_dumps(event, JSON_INDENT(3) | JSON_PRESERVE_ORDER);
+				gchar *event_text = json_dumps(event, json_format);
 				json_decref(event);
 				ret = janus_http_return_success(msg, event_text);
 			} else {
@@ -1314,7 +1334,7 @@ int janus_http_handler(void *cls, struct MHD_Connection *connection, const char 
 					events++;
 				}
 				/* Return the array of messages and leave */
-				gchar *list_text = json_dumps(list, JSON_INDENT(3) | JSON_PRESERVE_ORDER);
+				gchar *list_text = json_dumps(list, json_format);
 				json_decref(list);
 				ret = janus_http_return_success(msg, list_text);
 			}
@@ -1340,8 +1360,8 @@ int janus_http_handler(void *cls, struct MHD_Connection *connection, const char 
 
 parsingdone:
 	/* Check if we have session and handle identifiers */
-	session_id = session_path ? g_ascii_strtoll(session_path, NULL, 10) : 0;
-	handle_id = handle_path ? g_ascii_strtoll(handle_path, NULL, 10) : 0;
+	session_id = session_path ? g_ascii_strtoull(session_path, NULL, 10) : 0;
+	handle_id = handle_path ? g_ascii_strtoull(handle_path, NULL, 10) : 0;
 	if(session_id > 0)
 		json_object_set_new(root, "session_id", json_integer(session_id));
 	if(handle_id > 0)
@@ -1366,7 +1386,7 @@ parsingdone:
 	if(!msg->response) {
 		ret = MHD_NO;
 	} else {
-		char *response_text = json_dumps(msg->response, JSON_INDENT(3) | JSON_PRESERVE_ORDER);
+		char *response_text = json_dumps(msg->response, json_format);
 		json_decref(msg->response);
 		msg->response = NULL;
 		ret = janus_http_return_success(msg, response_text);
@@ -1587,8 +1607,8 @@ int janus_http_admin_handler(void *cls, struct MHD_Connection *connection, const
 
 parsingdone:
 	/* Check if we have session and handle identifiers */
-	session_id = session_path ? g_ascii_strtoll(session_path, NULL, 10) : 0;
-	handle_id = handle_path ? g_ascii_strtoll(handle_path, NULL, 10) : 0;
+	session_id = session_path ? g_ascii_strtoull(session_path, NULL, 10) : 0;
+	handle_id = handle_path ? g_ascii_strtoull(handle_path, NULL, 10) : 0;
 	if(session_id > 0)
 		json_object_set_new(root, "session_id", json_integer(session_id));
 	if(handle_id > 0)
@@ -1613,7 +1633,7 @@ parsingdone:
 	if(!msg->response) {
 		ret = MHD_NO;
 	} else {
-		char *response_text = json_dumps(msg->response, JSON_INDENT(3) | JSON_PRESERVE_ORDER);
+		char *response_text = json_dumps(msg->response, json_format);
 		json_decref(msg->response);
 		msg->response = NULL;
 		ret = janus_http_return_success(msg, response_text);
@@ -1675,7 +1695,7 @@ int janus_http_notifier(janus_http_msg *msg, int max_events) {
 	int ret = MHD_NO;
 	guint64 session_id = msg->session_id;
 	janus_mutex_lock(&sessions_mutex);
-	janus_http_session *session = g_hash_table_lookup(sessions, GUINT_TO_POINTER(session_id));
+	janus_http_session *session = g_hash_table_lookup(sessions, &session_id);
 	janus_mutex_unlock(&sessions_mutex);
 	if(!session || session->destroyed) {
 		JANUS_LOG(LOG_ERR, "Couldn't find any session %"SCNu64"...\n", session_id);
@@ -1728,7 +1748,7 @@ int janus_http_notifier(janus_http_msg *msg, int max_events) {
 		JANUS_LOG(LOG_VERB, "Long poll time out for session %"SCNu64"...\n", session_id);
 		/* Turn this into a "keepalive" response */
 		char tr[12];
-		janus_http_random_string(12, (char *)&tr);		
+		janus_http_random_string(12, (char *)&tr);
 		if(max_events == 1) {
 			event = json_object();
 			json_object_set_new(event, "janus", json_string("keepalive"));
@@ -1740,8 +1760,8 @@ int janus_http_notifier(janus_http_msg *msg, int max_events) {
 		}
 		/* FIXME Improve the Janus protocol keep-alive mechanism in JavaScript */
 	}
-	char *payload_text = json_dumps(list ? list : event, JSON_INDENT(3) | JSON_PRESERVE_ORDER);
-	json_decref(list ? list : event);
+	char *payload_text = json_dumps(max_events == 1 ? event : list, json_format);
+	json_decref(max_events == 1 ? event : list);
 	/* Finish the request by sending the response */
 	JANUS_LOG(LOG_VERB, "We have a message to serve...\n\t%s\n", payload_text);
 	/* Send event */
@@ -1756,7 +1776,7 @@ int janus_http_return_success(janus_http_msg *msg, char *payload) {
 		return MHD_NO;
 	}
 	struct MHD_Response *response = MHD_create_response_from_buffer(
-		strlen(payload),
+		payload ? strlen(payload) : 0,
 		(void*)payload,
 		MHD_RESPMEM_MUST_FREE);
 	MHD_add_response_header(response, "Content-Type", "application/json");
@@ -1798,7 +1818,7 @@ int janus_http_return_error(janus_http_msg *msg, uint64_t session_id, const char
 	json_object_set_new(error_data, "code", json_integer(error));
 	json_object_set_new(error_data, "reason", json_string(error_string));
 	json_object_set_new(reply, "error", error_data);
-	gchar *reply_text = json_dumps(reply, JSON_INDENT(3) | JSON_PRESERVE_ORDER);
+	gchar *reply_text = json_dumps(reply, json_format);
 	json_decref(reply);
 	/* Use janus_http_return_error to send the error response */
 	return janus_http_return_success(msg, reply_text);

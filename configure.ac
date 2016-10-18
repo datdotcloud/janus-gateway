@@ -1,4 +1,4 @@
-AC_INIT([Janus Gateway],[0.1.2],[https://github.com/meetecho/janus-gateway],[janus-gateway],[https://janus.conf.meetecho.com])
+AC_INIT([Janus Gateway],[0.2.0],[https://github.com/meetecho/janus-gateway],[janus-gateway],[https://janus.conf.meetecho.com])
 AC_CONFIG_AUX_DIR([.])
 AC_CONFIG_MACRO_DIR([m4])
 
@@ -63,6 +63,12 @@ AC_ARG_ENABLE([rabbitmq],
                               [Disable RabbitMQ integration])],
               [],
               [enable_rabbitmq=yes])
+
+AC_ARG_ENABLE([mqtt],
+              [AS_HELP_STRING([--disable-mqtt],
+                              [Disable MQTT integration])],
+              [],
+              [enable_mqtt=yes])
 
 AC_ARG_ENABLE([unix-sockets],
               [AS_HELP_STRING([--disable-unix-sockets],
@@ -258,6 +264,18 @@ AC_CHECK_LIB([rabbitmq],
                AS_IF([test "x$enable_rabbitmq" = "xyes"],
                      [AC_MSG_ERROR([rabbitmq-c not found. See README.md for installation instructions or use --disable-rabbitmq])])
              ])
+AC_CHECK_LIB([paho-mqtt3a],
+             [MQTTAsync_create],
+             [
+               AS_IF([test "x$enable_mqtt" = "xyes"],
+               [
+                  AC_DEFINE(HAVE_MQTT)
+               ])
+             ],
+             [
+               AS_IF([test "x$enable_mqtt" = "xyes"],
+                     [AC_MSG_ERROR([paho c client not found. See README.md for installation instructions or use --disable-mqtt])])
+             ])
 AM_CONDITIONAL([ENABLE_RABBITMQ], [test "x$enable_rabbitmq" = "xyes"])
 AX_LIB_MYSQL(,,AC_MSG_ERROR("Can't find mysql library" ))
 
@@ -347,6 +365,12 @@ AC_ARG_ENABLE([plugin-plex],
 							                              [Disable plex plugin])],
 							              [],
 							              [enable_plugin_plex=yes])
+
+AC_ARG_ENABLE([plugin-textroom],
+              [AS_HELP_STRING([--disable-plugin-textroom],
+                              [Disable textroom plugin])],
+              [],
+              [enable_plugin_textroom=yes])
 
 AC_ARG_ENABLE([plugin-textroom],
               [AS_HELP_STRING([--disable-plugin-textroom],
@@ -449,6 +473,9 @@ AM_COND_IF([ENABLE_WEBSOCKETS],
 AM_COND_IF([ENABLE_RABBITMQ],
 	[echo "    RabbitMQ:              yes"],
 	[echo "    RabbitMQ:              no"])
+AM_COND_IF([ENABLE_MQTT],
+	[echo "    MQTT:                  yes"],
+	[echo "    MQTT:                  no"])
 AM_COND_IF([ENABLE_PFUNIX],
 	[echo "    Unix Sockets:          yes"],
 	[echo "    Unix Sockets:          no"])

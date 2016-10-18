@@ -156,6 +156,14 @@ $(document).ready(function() {
 											$('#password').removeAttr('disabled');
 											$('#register').removeAttr('disabled').click(registerUsername);
 											$('#registerset').removeAttr('disabled');
+										} else {
+											// Reset status
+											sipcall.hangup();
+											$('#dovideo').removeAttr('disabled').val('');
+											$('#peer').removeAttr('disabled').val('');
+											$('#call').removeAttr('disabled').html('Call')
+												.removeClass("btn-danger").addClass("btn-success")
+												.unbind('click').click(doCall);
 										}
 										bootbox.alert(error);
 										return;
@@ -292,7 +300,7 @@ $(document).ready(function() {
 									$('#videos').removeClass('hide').show();
 									if($('#myvideo').length === 0)
 										$('#videoleft').append('<video class="rounded centered" id="myvideo" width=320 height=240 autoplay muted="muted"/>');
-									attachMediaStream($('#myvideo').get(0), stream);
+									Janus.attachMediaStream($('#myvideo').get(0), stream);
 									$("#myvideo").get(0).muted = "muted";
 									// No remote video yet
 									$('#videoright').append('<video class="rounded centered" id="waitingvideo" width=320 height=240 />');
@@ -345,7 +353,7 @@ $(document).ready(function() {
 											spinner.stop();
 										spinner = null;
 									});
-									attachMediaStream($('#remotevideo').get(0), stream);
+									Janus.attachMediaStream($('#remotevideo').get(0), stream);
 									var videoTracks = stream.getVideoTracks();
 									if(videoTracks === null || videoTracks === undefined || videoTracks.length === 0 || videoTracks[0].muted) {
 										// No remote video

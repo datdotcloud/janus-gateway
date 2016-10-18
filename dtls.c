@@ -118,8 +118,9 @@ void *janus_dtls_sctp_setup_thread(void *data);
 #endif
 
 
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
 /*
- * FIXME DTLS locking stuff to make OpenSSL thread safe
+ * DTLS locking stuff to make OpenSSL thread safe (not needed for 1.1.0)
  *
  * Note: this is an attempt to fix the infamous issue #316:
  * 		https://github.com/meetecho/janus-gateway/issues/316
@@ -163,6 +164,157 @@ static void janus_dtls_cb_openssl_lock(int mode, int type, const char *file, int
 	} else {
 		janus_mutex_unlock(&janus_dtls_locks[type]);
 	}
+}
+#endif
+
+
+static int janus_dtls_generate_keys(X509** certificate, EVP_PKEY** private_key) {
+	static const int num_bits = 2048;
+	BIGNUM* bne = NULL;
+	RSA* rsa_key = NULL;
+	X509_NAME* cert_name = NULL;
+
+	JANUS_LOG(LOG_VERB, "Generating DTLS key / cert\n");
+
+	/* Create a big number object. */
+	bne = BN_new();
+	if (!bne) {
+		JANUS_LOG(LOG_FATAL, "BN_new() failed\n");
+		goto error;
+	}
+
+	if (!BN_set_word(bne, RSA_F4)) {  /* RSA_F4 == 65537 */
+		JANUS_LOG(LOG_FATAL, "BN_set_word() failed\n");
+		goto error;
+	}
+
+	/* Generate a RSA key. */
+	rsa_key = RSA_new();
+	if (!rsa_key) {
+		JANUS_LOG(LOG_FATAL, "RSA_new() failed\n");
+		goto error;
+	}
+
+	/* This takes some time. */
+	if (!RSA_generate_key_ex(rsa_key, num_bits, bne, NULL)) {
+		JANUS_LOG(LOG_FATAL, "RSA_generate_key_ex() failed\n");
+		goto error;
+	}
+
+	/* Create a private key object (needed to hold the RSA key). */
+	*private_key = EVP_PKEY_new();
+	if (!*private_key) {
+		JANUS_LOG(LOG_FATAL, "EVP_PKEY_new() failed\n");
+		goto error;
+	}
+
+	if (!EVP_PKEY_assign_RSA(*private_key, rsa_key)) {
+		JANUS_LOG(LOG_FATAL, "EVP_PKEY_assign_RSA() failed\n");
+		goto error;
+	}
+	/* The RSA key now belongs to the private key, so don't clean it up separately. */
+	rsa_key = NULL;
+
+	/* Create the X509 certificate. */
+	*certificate = X509_new();
+	if (!*certificate) {
+		JANUS_LOG(LOG_FATAL, "X509_new() failed\n");
+		goto error;
+	}
+
+	/* Set version 3 (note that 0 means version 1). */
+	X509_set_version(*certificate, 2);
+
+	/* Set serial number. */
+	ASN1_INTEGER_set(X509_get_serialNumber(*certificate), (long)g_random_int());
+
+	/* Set valid period. */
+	X509_gmtime_adj(X509_get_notBefore(*certificate), -1 * DTLS_AUTOCERT_DURATION);  /* -1 year */
+	X509_gmtime_adj(X509_get_notAfter(*certificate), DTLS_AUTOCERT_DURATION);  /* 1 year */
+
+	/* Set the public key for the certificate using the key. */
+	if (!X509_set_pubkey(*certificate, *private_key)) {
+		JANUS_LOG(LOG_FATAL, "X509_set_pubkey() failed\n");
+		goto error;
+	}
+
+	/* Set certificate fields. */
+	cert_name = X509_get_subject_name(*certificate);
+	if (!cert_name) {
+		JANUS_LOG(LOG_FATAL, "X509_get_subject_name() failed\n");
+		goto error;
+	}
+	X509_NAME_add_entry_by_txt(cert_name, "O", MBSTRING_ASC, (const unsigned char*)"Janus", -1, -1, 0);
+	X509_NAME_add_entry_by_txt(cert_name, "CN", MBSTRING_ASC, (const unsigned char*)"Janus", -1, -1, 0);
+
+	/* It is self-signed so set the issuer name to be the same as the subject. */
+	if (!X509_set_issuer_name(*certificate, cert_name)) {
+		JANUS_LOG(LOG_FATAL, "X509_set_issuer_name() failed\n");
+		goto error;
+	}
+
+	/* Sign the certificate with the private key. */
+	if (!X509_sign(*certificate, *private_key, EVP_sha1())) {
+		JANUS_LOG(LOG_FATAL, "X509_sign() failed\n");
+		goto error;
+	}
+
+	/* Free stuff and resurn. */
+	BN_free(bne);
+	return 0;
+
+error:
+	if (bne)
+		BN_free(bne);
+	if (rsa_key && !*private_key)
+		RSA_free(rsa_key);
+	if (*private_key)
+		EVP_PKEY_free(*private_key);  /* This also frees the RSA key. */
+	if (*certificate)
+		X509_free(*certificate);
+	return -1;
+}
+
+
+static int janus_dtls_load_keys(const char* server_pem, const char* server_key, X509** certificate, EVP_PKEY** private_key) {
+	FILE* f = NULL;
+
+	f = fopen(server_pem, "r");
+	if (!f) {
+		JANUS_LOG(LOG_FATAL, "Error opening certificate file\n");
+		goto error;
+	}
+	*certificate = PEM_read_X509(f, NULL, NULL, NULL);
+	if (!*certificate) {
+		JANUS_LOG(LOG_FATAL, "PEM_read_X509 failed\n");
+		goto error;
+	}
+	fclose(f);
+
+	f = fopen(server_key, "r");
+	if (!f) {
+		JANUS_LOG(LOG_FATAL, "Error opening key file\n");
+		goto error;
+	}
+	*private_key = PEM_read_PrivateKey(f, NULL, NULL, NULL);
+	if (!*private_key) {
+		JANUS_LOG(LOG_FATAL, "PEM_read_PrivateKey failed\n");
+		goto error;
+	}
+	fclose(f);
+
+	return 0;
+
+error:
+	if (*certificate) {
+		X509_free(*certificate);
+		*certificate = NULL;
+	}
+	if (*private_key) {
+		EVP_PKEY_free(*private_key);
+		*private_key = NULL;
+	}
+	return -1;
 }
 
 
@@ -318,7 +470,9 @@ error:
 
 /* DTLS-SRTP initialization */
 gint janus_dtls_srtp_init(const char* server_pem, const char* server_key) {
-	/* FIXME First of all make OpenSSL thread safe (see note above on issue #316) */
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+	JANUS_LOG(LOG_WARN, "OpenSSL pre-1.1.0\n");
+	/* First of all make OpenSSL thread safe (see note above on issue #316) */
 	janus_dtls_locks = g_malloc0(sizeof(*janus_dtls_locks) * CRYPTO_num_locks());
 	int l=0;
 	for(l = 0; l < CRYPTO_num_locks(); l++) {
@@ -326,9 +480,16 @@ gint janus_dtls_srtp_init(const char* server_pem, const char* server_key) {
 	}
 	CRYPTO_THREADID_set_callback(janus_dtls_cb_openssl_threadid);
 	CRYPTO_set_locking_callback(janus_dtls_cb_openssl_lock);
+#else
+	JANUS_LOG(LOG_WARN, "OpenSSL >= 1.1.0\n");
+#endif
 
 	/* Go on and create the DTLS context */
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
 	ssl_ctx = SSL_CTX_new(DTLSv1_method());
+#else
+	ssl_ctx = SSL_CTX_new(DTLS_method());
+#endif
 	if(!ssl_ctx) {
 		JANUS_LOG(LOG_FATAL, "Ops, error creating DTLS context?\n");
 		return -1;
@@ -378,6 +539,11 @@ gint janus_dtls_srtp_init(const char* server_pem, const char* server_key) {
 	*(lfp-1) = 0;
 	JANUS_LOG(LOG_INFO, "Fingerprint of our certificate: %s\n", local_fingerprint);
 	SSL_CTX_set_cipher_list(ssl_ctx, DTLS_CIPHERS);
+
+	if(janus_dtls_bio_filter_init() < 0) {
+		JANUS_LOG(LOG_FATAL, "Error initializing BIO filter\n");
+		return -8;
+	}
 
 	/* Initialize libsrtp */
 	if(srtp_init() != err_status_ok) {
@@ -705,7 +871,9 @@ void janus_dtls_srtp_incoming_msg(janus_dtls_srtp *dtls, char *buf, uint16_t len
 					if(dtls->sctp != NULL) {
 						/* FIXME We need to start it in a thread, though, since it has blocking accept/connect stuff */
 						GError *error = NULL;
-						g_thread_try_new("DTLS-SCTP", janus_dtls_sctp_setup_thread, dtls, &error);
+						char tname[16];
+						g_snprintf(tname, sizeof(tname), "sctpinit %"SCNu64, handle->handle_id);
+						g_thread_try_new(tname, janus_dtls_sctp_setup_thread, dtls, &error);
 						if(error != NULL) {
 							/* Something went wrong... */
 							JANUS_LOG(LOG_ERR, "[%"SCNu64"] Got error %d (%s) trying to launch the DTLS-SCTP thread...\n", handle->handle_id, error->code, error->message ? error->message : "??");
