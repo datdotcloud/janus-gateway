@@ -179,6 +179,7 @@ static void janus_pp_h264_parse_sps(char *buffer, int *width, int *height) {
 		*height = ((2 - frame_mbs_only_flag)* (pic_height_in_map_units_minus1 +1) * 16) - (frame_crop_right_offset * 2) - (frame_crop_left_offset * 2);
 }
 
+
 int janus_pp_h264_preprocess(FILE *file, janus_pp_frame_packet *list) {
 	if(!file || !list)
 		return -1;

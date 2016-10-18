@@ -548,21 +548,6 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	if(video) {
-		/* Look for maximum width and height, if possible, and for the average framerate */
-		if(vp8 || vp9) {
-			if(janus_pp_webm_preprocess(file, list, vp8) < 0) {
-				JANUS_LOG(LOG_ERR, "Error pre-processing %s RTP frames...\n", vp8 ? "VP8" : "VP9");
-				exit(1);
-			}
-		} else if(h264) {
-			if(janus_pp_h264_preprocess(file, list) < 0) {
-				JANUS_LOG(LOG_ERR, "Error pre-processing H.264 RTP frames...\n");
-				exit(1);
-			}
-		}
-	}
-
 	if(parse_only) {
 		/* We only needed to parse and re-order the packets, we're done here */
 		JANUS_LOG(LOG_INFO, "Parsing and reordering completed, bye!\n");

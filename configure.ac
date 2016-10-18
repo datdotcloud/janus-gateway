@@ -1,4 +1,5 @@
-AC_INIT([Janus Gateway],[0.2.0],[https://github.com/meetecho/janus-gateway],[janus-gateway],[https://janus.conf.meetecho.com])
+AC_INIT([Janus Gateway],[0.2.1],[https://github.com/meetecho/janus-gateway],[janus-gateway],[https://janus.conf.meetecho.com])
+
 AC_CONFIG_AUX_DIR([.])
 AC_CONFIG_MACRO_DIR([m4])
 
@@ -101,7 +102,6 @@ PKG_CHECK_MODULES([JANUS],
                     jansson
                     libssl >= $ssl_version
                     libcrypto
-                    sofia-sip-ua
                   ])
 JANUS_MANUAL_LIBS+=" -lm"
 AC_SUBST(JANUS_MANUAL_LIBS)
@@ -220,6 +220,8 @@ PKG_CHECK_MODULES([MHD],
                     AS_IF([test "x$enable_rest" = "xyes"],
                           [AC_MSG_ERROR([libmicrohttpd not found. See README.md for installation instructions or use --disable-rest])])
                   ])
+AC_SUBST([MHD_CFLAGS])
+AC_SUBST([MHD_LIBS])
 AM_CONDITIONAL([ENABLE_REST], [test "x$enable_rest" = "xyes"])
 
 AM_CONDITIONAL([ENABLE_WEBSOCKETS_NEWAPI], false)
@@ -278,6 +280,7 @@ AC_CHECK_LIB([paho-mqtt3a],
              ])
 AM_CONDITIONAL([ENABLE_RABBITMQ], [test "x$enable_rabbitmq" = "xyes"])
 AX_LIB_MYSQL(,,AC_MSG_ERROR("Can't find mysql library" ))
+AM_CONDITIONAL([ENABLE_MQTT], [test "x$enable_mqtt" = "xyes"])
 
 AC_TRY_COMPILE([
                #include <stdlib.h>
@@ -309,7 +312,6 @@ AM_CONDITIONAL([ENABLE_PFUNIX], [test "x$enable_pfunix" = "xyes"])
 PKG_CHECK_MODULES([PLUGINS],
                   [
                     glib-2.0 >= $glib_version
-                    sofia-sip-ua
                     jansson
                   ])
 
@@ -378,6 +380,22 @@ AC_ARG_ENABLE([plugin-textroom],
               [],
               [enable_plugin_textroom=yes])
 
+AC_ARG_ENABLE([plugin-textroom],
+              [AS_HELP_STRING([--disable-plugin-textroom],
+                              [Disable textroom plugin])],
+              [],
+              [enable_plugin_textroom=yes])
+
+PKG_CHECK_MODULES([SOFIA],
+                  [sofia-sip-ua],
+                  [],
+                  [
+                    AC_MSG_NOTICE(sofia-sip-ua not found. The sip plugin will not be built.)
+                    enable_plugin_sip=no
+                  ])
+AC_SUBST([SOFIA_CFLAGS])
+AC_SUBST([SOFIA_LIBS])
+
 PKG_CHECK_MODULES([OPUS],
                   [opus],
                   [],
@@ -385,6 +403,8 @@ PKG_CHECK_MODULES([OPUS],
                     AC_MSG_NOTICE(libopus not found. The audiobridge plugin will not be built.)
                     enable_plugin_audiobridge=no
                   ])
+AC_SUBST([OPUS_CFLAGS])
+AC_SUBST([OPUS_LIBS])
 
 PKG_CHECK_MODULES([OGG],
                   [ogg],
@@ -393,6 +413,8 @@ PKG_CHECK_MODULES([OGG],
                     AC_MSG_NOTICE(libogg not found. The voicemail plugin will not be built.)
                     enable_plugin_voicemail=no
                   ])
+AC_SUBST([OGG_CFLAGS])
+AC_SUBST([OGG_LIBS])
 
 AM_CONDITIONAL([ENABLE_PLUGIN_AUDIOBRIDGE], [test "x$enable_plugin_audiobridge" = "xyes"])
 AM_CONDITIONAL([ENABLE_PLUGIN_ECHOTEST], [test "x$enable_plugin_echotest" = "xyes"])
@@ -404,6 +426,7 @@ AM_CONDITIONAL([ENABLE_PLUGIN_VIDEOROOM], [test "x$enable_plugin_videoroom" = "x
 AM_CONDITIONAL([ENABLE_PLUGIN_VOICEMAIL], [test "x$enable_plugin_voicemail" = "xyes"])
 AM_CONDITIONAL([ENABLE_PLUGIN_TEXTROOM], [test "x$enable_plugin_textroom" = "xyes"])
 AM_CONDITIONAL([ENABLE_PLUGIN_PLEX], [test "x$enable_plugin_plex" = "xyes"])
+
 
 ##
 # Post-processing
@@ -510,6 +533,7 @@ AM_COND_IF([ENABLE_PLUGIN_TEXTROOM],
 AM_COND_IF([ENABLE_PLUGIN_PLEX],
 	[echo "    Plex:                  yes"],
 	[echo "    Plex:                  no"])
+
 
 echo
 echo "If this configuration is ok for you, do a 'make' to start building Janus. A 'make install' will install Janus and its plugins to the specified prefix. Finally, a 'make configs' will install some sample configuration files too (something you'll only want to do the first time, though)."

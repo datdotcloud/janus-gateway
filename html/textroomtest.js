@@ -77,11 +77,7 @@ $(document).ready(function() {
 				{
 					server: server,
 					success: function() {
-<<<<<<< HEAD
-						// Attach to echo test plugin
-=======
 						// Attach to text room plugin
->>>>>>> v0.2.0
 						janus.attach(
 							{
 								plugin: "janus.plugin.textroom",
@@ -163,19 +159,11 @@ $(document).ready(function() {
 										if(whisper === true) {
 											// Private message
 											$('#chatroom').append('<p style="color: purple;">[' + dateString + '] <b>[whisper from ' + participants[from] + ']</b> ' + msg);
-<<<<<<< HEAD
-											$('#chatroom').get(0).scrollTop = $('#chatroom').get(0).scrollHeight;				
-										} else {
-											// Public message
-											$('#chatroom').append('<p>[' + dateString + '] <b>' + participants[from] + ':</b> ' + msg);
-											$('#chatroom').get(0).scrollTop = $('#chatroom').get(0).scrollHeight;				
-=======
 											$('#chatroom').get(0).scrollTop = $('#chatroom').get(0).scrollHeight;
 										} else {
 											// Public message
 											$('#chatroom').append('<p>[' + dateString + '] <b>' + participants[from] + ':</b> ' + msg);
 											$('#chatroom').get(0).scrollTop = $('#chatroom').get(0).scrollHeight;
->>>>>>> v0.2.0
 										}
 									} else if(what === "join") {
 										// Somebody joined
@@ -191,22 +179,14 @@ $(document).ready(function() {
 											});
 										}
 										$('#chatroom').append('<p style="color: green;">[' + getDateString() + '] <i>' + participants[username] + ' joined</i></p>');
-<<<<<<< HEAD
-										$('#chatroom').get(0).scrollTop = $('#chatroom').get(0).scrollHeight;				
-=======
 										$('#chatroom').get(0).scrollTop = $('#chatroom').get(0).scrollHeight;
->>>>>>> v0.2.0
 									} else if(what === "leave") {
 										// Somebody left
 										var username = json["username"];
 										var when = new Date();
 										$('#rp' + username).remove();
 										$('#chatroom').append('<p style="color: green;">[' + getDateString() + '] <i>' + participants[username] + ' left</i></p>');
-<<<<<<< HEAD
-										$('#chatroom').get(0).scrollTop = $('#chatroom').get(0).scrollHeight;				
-=======
 										$('#chatroom').get(0).scrollTop = $('#chatroom').get(0).scrollHeight;
->>>>>>> v0.2.0
 										delete participants[username];
 									} else if(what === "destroyed") {
 										// Room was destroyed, goodbye!
@@ -306,11 +286,7 @@ function registerUsername() {
 						});
 					}
 					$('#chatroom').append('<p style="color: green;">[' + getDateString() + '] <i>' + participants[p.username] + ' joined</i></p>');
-<<<<<<< HEAD
-					$('#chatroom').get(0).scrollTop = $('#chatroom').get(0).scrollHeight;				
-=======
 					$('#chatroom').get(0).scrollTop = $('#chatroom').get(0).scrollHeight;
->>>>>>> v0.2.0
 				}
 			}
 		};
@@ -343,11 +319,7 @@ function sendPrivateMsg(username) {
 				error: function(reason) { bootbox.alert(reason); },
 				success: function() {
 					$('#chatroom').append('<p style="color: purple;">[' + getDateString() + '] <b>[whisper to ' + display + ']</b> ' + result);
-<<<<<<< HEAD
-					$('#chatroom').get(0).scrollTop = $('#chatroom').get(0).scrollHeight;				
-=======
 					$('#chatroom').get(0).scrollTop = $('#chatroom').get(0).scrollHeight;
->>>>>>> v0.2.0
 				}
 			});
 		}
@@ -365,10 +337,6 @@ function sendData() {
 		textroom: "message",
 		transaction: randomString(12),
 		room: myroom,
-<<<<<<< HEAD
-		text: data
-	};
-=======
  		text: data,
 	};
 	// Note: messages are always acknowledged by default. This means that you'll
@@ -376,7 +344,6 @@ function sendData() {
 	// server and forwarded to the recipients. If you do not want this to happen,
 	// just add an ack:false property to the message above, and server won't send
 	// you a response (meaning you just have to hope it succeeded).
->>>>>>> v0.2.0
 	textroom.data({
 		text: JSON.stringify(message),
 		error: function(reason) { bootbox.alert(reason); },
