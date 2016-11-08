@@ -362,11 +362,11 @@ AC_ARG_ENABLE([plugin-voicemail],
                               [Disable voicemail plugin])],
               [],
               [enable_plugin_voicemail=yes])
-AC_ARG_ENABLE([plugin-plex],
-							              [AS_HELP_STRING([--disable-plugin-plex],
-							                              [Disable plex plugin])],
+AC_ARG_ENABLE([plugin-impstar],
+							              [AS_HELP_STRING([--disable-plugin-impstar],
+							                              [Disable impstar plugin])],
 							              [],
-							              [enable_plugin_plex=yes])
+							              [enable_plugin_impstar=yes])
 
 AC_ARG_ENABLE([plugin-textroom],
               [AS_HELP_STRING([--disable-plugin-textroom],
@@ -425,7 +425,7 @@ AM_CONDITIONAL([ENABLE_PLUGIN_VIDEOCALL], [test "x$enable_plugin_videocall" = "x
 AM_CONDITIONAL([ENABLE_PLUGIN_VIDEOROOM], [test "x$enable_plugin_videoroom" = "xyes"])
 AM_CONDITIONAL([ENABLE_PLUGIN_VOICEMAIL], [test "x$enable_plugin_voicemail" = "xyes"])
 AM_CONDITIONAL([ENABLE_PLUGIN_TEXTROOM], [test "x$enable_plugin_textroom" = "xyes"])
-AM_CONDITIONAL([ENABLE_PLUGIN_PLEX], [test "x$enable_plugin_plex" = "xyes"])
+AM_CONDITIONAL([ENABLE_PLUGIN_IMPSTAR], [test "x$enable_plugin_impstar" = "xyes"])
 
 
 ##
@@ -530,9 +530,9 @@ AM_COND_IF([ENABLE_PLUGIN_RECORDPLAY],
 AM_COND_IF([ENABLE_PLUGIN_TEXTROOM],
 	[echo "    Text Room:             yes"],
 	[echo "    Text Room:             no"])
-AM_COND_IF([ENABLE_PLUGIN_PLEX],
-	[echo "    Plex:                  yes"],
-	[echo "    Plex:                  no"])
+AM_COND_IF([ENABLE_PLUGIN_IMPSTAR],
+	[echo "    Impstar:                  yes"],
+	[echo "    Impstar:                  no"])
 
 
 echo

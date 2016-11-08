@@ -281,14 +281,12 @@ EXTRA_DIST += \
 CLEANFILES += conf/janus.plugin.streaming.cfg.sample
 endif
 
-if ENABLE_PLUGIN_PLEX
-plugin_LTLIBRARIES += plugins/libjanus_plex.la
-plugins_libjanus_plex_la_SOURCES = plugins/plex/plex.c \
-	plugins/plex/plugin_description.c \
-	plugins/plex/mysql_db.c
-plugins_libjanus_plex_la_CFLAGS = $(plugins_cflags) -I.. $(MYSQL_CFLAGS)
-plugins_libjanus_plex_la_LDFLAGS = $(plugins_ldflags) $(MYSQL_LDFLAGS)
-plugins_libjanus_plex_la_LIBADD = $(plugins_libadd)
+if ENABLE_PLUGIN_IMPSTAR
+plugin_LTLIBRARIES += plugins/libimpstar.la
+plugins_libimpstar_la_SOURCES = plugins/impstar/impstar.c
+plugins_libimpstar_la_CFLAGS = $(plugins_cflags) -I.. $(MYSQL_CFLAGS)
+plugins_libimpstar_la_LDFLAGS = $(plugins_ldflags) $(MYSQL_LDFLAGS)
+plugins_libimpstar_la_LIBADD = $(plugins_libadd)
 endif
 
 if ENABLE_PLUGIN_VIDEOCALL
