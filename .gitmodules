@@ -1,3 +1,6 @@
 [submodule "plugins/impstar"]
 	path = plugins/impstar
 	url = https://github.com/WatchBeam/impstar_janus_plugin.git
+[submodule "plugins\\impstar"]
+	path = plugins\\impstar
+	url = https://github.com/WatchBeam/impstar_janus_plugin.git
