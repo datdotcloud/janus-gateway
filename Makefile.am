@@ -283,7 +283,8 @@ endif
 
 if ENABLE_PLUGIN_IMPSTAR
 plugin_LTLIBRARIES += plugins/libimpstar.la
-plugins_libimpstar_la_SOURCES = plugins/impstar/impstar.c
+plugins_libimpstar_la_SOURCES = plugins/impstar/impstar.c \
+	 plugins/impstar/message.c
 plugins_libimpstar_la_CFLAGS = $(plugins_cflags) -I.. $(MYSQL_CFLAGS)
 plugins_libimpstar_la_LDFLAGS = $(plugins_ldflags) $(MYSQL_LDFLAGS)
 plugins_libimpstar_la_LIBADD = $(plugins_libadd)
