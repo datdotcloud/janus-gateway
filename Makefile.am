@@ -290,7 +290,8 @@ plugins_libimpstar_la_SOURCES = plugins/impstar/impstar.c \
          plugins/impstar/channel_helpers.c \
 	 plugins/impstar/stream.c \
          plugins/impstar/helpers.c \
-	 plugins/impstar/sdp.c
+	 plugins/impstar/sdp.c \
+         plugins/impstar/ingest.c
 plugins_libimpstar_la_CFLAGS = $(plugins_cflags) -I.. $(MYSQL_CFLAGS)
 plugins_libimpstar_la_LDFLAGS = $(plugins_ldflags) $(MYSQL_LDFLAGS)
 plugins_libimpstar_la_LIBADD = $(plugins_libadd)
