@@ -16,8 +16,7 @@ node {
             }
             stage("make all") {
                 sh 'cd build_scripts'
-                sh './janus.bash /tmp/impstar/'
-                sh 'tar -C /tmp/impstar/opt/janus/ -cf impstar.tar .
+                sh './janus.bash ${projectDir}/build'
             }
             stage("deploy") {
                 archiveArtifacts artifacts: "impstar.tar", fingerprint: true
