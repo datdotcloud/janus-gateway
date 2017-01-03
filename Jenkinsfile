@@ -15,8 +15,7 @@ node {
                 sh 'git submodule update --init'
             }
             stage("make all") {
-                sh 'cd build_scripts'
-                sh './janus.bash ${projectDir}/build'
+                sh 'cd build_scripts && ./janus.bash ${projectDir}/build'
             }
             stage("deploy") {
                 archiveArtifacts artifacts: "impstar.tar", fingerprint: true
