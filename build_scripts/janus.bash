@@ -12,9 +12,9 @@ GENERAL_OPTS="--disable-data-channels --disable-docs --disable-rabbitmq --disabl
 #./configure --prefix=/opt/janus $PLUGIN_OPTS $GENERAL_OPTS LDFLAGS="-L/lib64 -Wl,-rpath=/lib64" CFLAGS="-I/usr/include"
 make
 if [[ -z "$1" ]]; then
-echo -e "\e[7mInstalling to /opt/janus\e[27m"
+echo -e "\e[7mInstalling to /opt/janus-impstar\e[27m"
 make install
 else
-echo -e "\e[7mInstalling to $1/opt/janus\e[27m"
+echo -e "\e[7mInstalling to $1/opt/janus-impstar\e[27m"
 make install DESTDIR=$1
 fi
