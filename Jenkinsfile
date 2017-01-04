@@ -19,7 +19,7 @@ node {
                 sh "cd build_scripts && ./janus.bash '${artifactDir}'"
             }
             stage("deploy") {
-                archiveArtifacts artifacts: "${artifactDir}/opt/janus/**/*", fingerprint: true
+                archiveArtifacts artifacts: "build/opt/janus/**/*", fingerprint: true
             }
             currentBuild.result = "SUCCESS"
         }
