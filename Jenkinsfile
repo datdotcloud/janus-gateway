@@ -4,6 +4,7 @@ node {
     def projectName = "janus-impstar"
     
     def projectDir = pwd()+ "/${projectName}"
+    def artifactDir = "${projectName}/build"
 
     try {
         sh "mkdir -p '${projectDir}'"
@@ -15,10 +16,10 @@ node {
                 sh 'git submodule update --init'
             }
             stage("make all") {
-                sh "cd build_scripts && ./janus.bash '${projectDir}'/build"
+                sh "cd build_scripts && ./janus.bash '${artifactDir}'"
             }
             stage("deploy") {
-                archiveArtifacts artifacts: "'${projectDir}'/build/opt/janus/", fingerprint: true
+                archiveArtifacts artifacts: "${artifactDir}/opt/janus/**/*", fingerprint: true
             }
             currentBuild.result = "SUCCESS"
         }
