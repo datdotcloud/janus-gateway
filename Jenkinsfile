@@ -4,7 +4,7 @@ node {
     def projectName = "janus-impstar"
     
     def projectDir = pwd()+ "/${projectName}"
-    def artifactDir = "${projectName}/build"
+    def artifactDir = "${projectDir}/build"
 
     try {
         sh "mkdir -p '${projectDir}'"
