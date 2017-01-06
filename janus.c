@@ -377,10 +377,8 @@ static gboolean janus_check_sessions(gpointer user_data)
         /* Mark the session as over, we'll deal with it later */
         session->timeout = 1;
         /* FIXME Is this safe? apparently it causes hash table errors on the console */
-        JANUS_LOG(LOG_INFO, "remove iter\n");
         g_hash_table_iter_remove(&iter);
         //g_hash_table_iter_init(&iter, session->ice_handles);
-        JANUS_LOG(LOG_INFO, "remove iter - done\n");
         g_hash_table_insert(old_sessions, janus_uint64_dup(session->session_id), session);
 
         /* Schedule the session for deletion */
@@ -506,10 +504,8 @@ gint janus_session_destroy(guint64 session_id)
       {
         continue;
       }
-      janus_ice_handle_destroy(session, handle->handle_id);
-      JANUS_LOG(LOG_INFO, "remove iter 2\n");
       g_hash_table_iter_remove(&iter);
-      JANUS_LOG(LOG_INFO, "remove iter done 2\n");
+      janus_ice_handle_destroy(session, handle->handle_id);
     }
   }
 
