@@ -504,8 +504,8 @@ gint janus_session_destroy(guint64 session_id)
       {
         continue;
       }
-      g_hash_table_iter_remove(&iter);
       janus_ice_handle_destroy(session, handle->handle_id);
+      g_hash_table_iter_remove(&iter);      
     }
   }
 
