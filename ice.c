@@ -4191,7 +4191,7 @@ static gint janus_pkt_queue_depth_ms(janus_ice_handle *handle, gboolean video_pk
 
   delta_ms = (gint)((guint64)delta_ts * (guint64)1000 / (guint64)ts_base_freq);
 
-  JANUS_LOG(LOG_VERB, "PKT_QUEUE: %s packet queue has %d ms in it (last sent ts %" G_GUINT32_FORMAT ", newest ts %" G_GUINT32_FORMAT ", ts base %" G_GUINT32_FORMAT " \n",
+  JANUS_LOG(LOG_INFO, "PKT_QUEUE: %s packet queue has %d ms in it (last sent ts %" G_GUINT32_FORMAT ", newest ts %" G_GUINT32_FORMAT ", ts base %" G_GUINT32_FORMAT " \n",
             video_pkt_queue ? "video" : "audio", delta_ms, last_sent_ts, newest_ts, ts_base_freq);
 
   return delta_ms;
@@ -4208,7 +4208,7 @@ void janus_ice_relay_rtp(janus_ice_handle *handle, int video, char *buf, int len
   gint queue_ms;
   if ((queue_ms = janus_pkt_queue_depth_ms(handle, video, (rtp_header *)buf)) > MAX_QUEUE_DEPTH_MS)
   {
-    JANUS_LOG(LOG_VERB, "PKT_QUEUE has %d ms in it, discarding packet\n", queue_ms);
+    JANUS_LOG(LOG_INFO, "PKT_QUEUE has %d ms in it, discarding packet\n", queue_ms);
     return;
   }
 
