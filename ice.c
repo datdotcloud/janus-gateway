@@ -4159,6 +4159,8 @@ static gint janus_pkt_queue_depth_ms(janus_ice_handle *handle, gboolean video_pk
 
   janus_ice_component *component;
 
+  JANUS_LOG(LOG_INFO, "PKT_QUEUE: got %s packet with ts of %" G_GUINT32_FORMAT "\n", video_pkt_queue ? "video" : "audio", newest_ts);
+
   if (video_pkt_queue)
   {
     if (handle->video_stream == NULL || handle->video_stream->video_rtcp_ctx == NULL || handle->video_stream->rtp_component == NULL)
