@@ -4185,7 +4185,7 @@ static gint janus_pkt_queue_depth_ms(janus_ice_handle *handle, gboolean video_pk
 
   delta_ms = (gint)((guint64)delta_ts * (guint64)1000 / (guint64)ts_base_freq);
 
-  JANUS_LOG(LOG_VERB, "PKT_QUEUE: packet queue has %d ms in it (last sent ts " G_GUINT32_FORMAT ", newest ts " G_GUINT32_FORMAT ", ts base " G_GUINT32_FORMAT " \n", delta_ms, last_sent_ts, newest_ts, ts_base_freq);
+  JANUS_LOG(LOG_VERB, "PKT_QUEUE: packet queue has %d ms in it (last sent ts %" G_GUINT32_FORMAT ", newest ts %" G_GUINT32_FORMAT ", ts base %" G_GUINT32_FORMAT " \n", delta_ms, last_sent_ts, newest_ts, ts_base_freq);
 
   return delta_ms;
 }
