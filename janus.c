@@ -3897,7 +3897,7 @@ gint main(int argc, char *argv[])
       rtp_max_port = 65535;
     JANUS_LOG(LOG_INFO, "RTP port range: %u -- %u\n", rtp_min_port, rtp_max_port);
   }
-  int max_pkt_queue_depth_ms = MAX_QUEUE_DEPTH_MS;
+  int max_pkt_queue_depth_ms = 0;
   item = janus_config_get_item_drilldown(config, "media", "max_pkt_queue_depth_ms");
   if (item && item->value)
   {

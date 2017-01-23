@@ -736,7 +736,10 @@ void janus_ice_init(gboolean ice_lite, gboolean ice_tcp, gboolean ipv6, uint16_t
 #endif
   }
 
-  max_pkt_queue_in_ms = max_pkt_queue_depth_ms;
+  if (max_pkt_queue_depth_ms > 0)
+  {
+    max_pkt_queue_in_ms = max_pkt_queue_depth_ms;
+  }
   JANUS_LOG(LOG_INFO, "ICE maximum packet queue size in ms: %d\n", max_pkt_queue_in_ms);
 
   /* We keep track of old plugin sessions to avoid problems */
