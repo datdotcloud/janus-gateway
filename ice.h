@@ -28,6 +28,7 @@
 #include "plugins/plugin.h"
 
 #define MAX_QUEUE_DEPTH_MS 500
+#define MAX_QUEUE_DEPTH 1000
 
 /*! \brief ICE stuff initialization
  * @param[in] ice_lite Whether the ICE Lite mode should be enabled or not
@@ -36,7 +37,7 @@
  * @param[in] rtp_min_port Minimum port to use for RTP/RTCP, if a range is to be used
  * @param[in] rtp_max_port Maximum port to use for RTP/RTCP, if a range is to be used
  * @param[in] max_pkt_queue_depth_ms Maximum number of milliseconds of audio or video data to store in packet queue */
-void janus_ice_init(gboolean ice_lite, gboolean ice_tcp, gboolean ipv6, uint16_t rtp_min_port, uint16_t rtp_max_port, int max_pkt_queue_depth_ms);
+void janus_ice_init(gboolean ice_lite, gboolean ice_tcp, gboolean ipv6, uint16_t rtp_min_port, uint16_t rtp_max_port, int max_pkt_queue_depth, int max_pkt_queue_depth_ms);
 /*! \brief ICE stuff de-initialization */
 void janus_ice_deinit(void);
 /*! \brief Method to force Janus to use a STUN server when gathering candidates

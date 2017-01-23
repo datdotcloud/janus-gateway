@@ -3897,12 +3897,21 @@ gint main(int argc, char *argv[])
       rtp_max_port = 65535;
     JANUS_LOG(LOG_INFO, "RTP port range: %u -- %u\n", rtp_min_port, rtp_max_port);
   }
+
+  int max_pkt_queue_depth = 0;
+  item = janus_config_get_item_drilldown(config, "media", "max_pkt_queue_depth");
+  if (item && item->value)
+  {
+    max_pkt_queue_depth = atoi(item->value);
+  }
+
   int max_pkt_queue_depth_ms = 0;
   item = janus_config_get_item_drilldown(config, "media", "max_pkt_queue_depth_ms");
   if (item && item->value)
   {
     max_pkt_queue_depth_ms = atoi(item->value);
   }
+
   /* Check if we need to enable the ICE Lite mode */
   item = janus_config_get_item_drilldown(config, "nat", "ice_lite");
   ice_lite = (item && item->value) ? janus_is_true(item->value) : FALSE;
@@ -3954,7 +3963,7 @@ gint main(int argc, char *argv[])
     turn_rest_api_method = (char *)item->value;
 #endif
   /* Initialize the ICE stack now */
-  janus_ice_init(ice_lite, ice_tcp, ipv6, rtp_min_port, rtp_max_port, max_pkt_queue_depth_ms);
+  janus_ice_init(ice_lite, ice_tcp, ipv6, rtp_min_port, rtp_max_port, max_pkt_queue_depth, max_pkt_queue_depth_ms);
   if (janus_ice_set_stun_server(stun_server, stun_port) < 0)
   {
     JANUS_LOG(LOG_FATAL, "Invalid STUN address %s:%u\n", stun_server, stun_port);

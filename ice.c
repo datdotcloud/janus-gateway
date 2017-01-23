@@ -272,6 +272,7 @@ gboolean janus_ice_is_ignored(const char *ip)
 uint16_t rtp_range_min = 0;
 uint16_t rtp_range_max = 0;
 int max_pkt_queue_in_ms = MAX_QUEUE_DEPTH_MS;
+int max_size_pkt_queue = MAX_QUEUE_DEPTH;
 
 /* Helpers to demultiplex protocols */
 static gboolean janus_is_dtls(gchar *buf)
@@ -693,7 +694,7 @@ void janus_ice_trickle_destroy(janus_ice_trickle *trickle)
 }
 
 /* libnice initialization */
-void janus_ice_init(gboolean ice_lite, gboolean ice_tcp, gboolean ipv6, uint16_t rtp_min_port, uint16_t rtp_max_port, int max_pkt_queue_depth_ms)
+void janus_ice_init(gboolean ice_lite, gboolean ice_tcp, gboolean ipv6, uint16_t rtp_min_port, uint16_t rtp_max_port, int max_pkt_queue_depth, int max_pkt_queue_depth_ms)
 {
   janus_ice_lite_enabled = ice_lite;
   janus_ice_tcp_enabled = ice_tcp;
@@ -736,6 +737,12 @@ void janus_ice_init(gboolean ice_lite, gboolean ice_tcp, gboolean ipv6, uint16_t
     JANUS_LOG(LOG_INFO, "ICE port range: %" SCNu16 "-%" SCNu16 "\n", rtp_range_min, rtp_range_max);
 #endif
   }
+
+  if (max_pkt_queue_depth > 0)
+  {
+    max_size_pkt_queue = max_pkt_queue_depth;
+  }
+  JANUS_LOG(LOG_INFO, "ICE maximum packet queue size: %d\n", max_size_pkt_queue);
 
   if (max_pkt_queue_depth_ms > 0)
   {
@@ -4226,6 +4233,13 @@ void janus_ice_relay_rtp(janus_ice_handle *handle, int video, char *buf, int len
     return;
   if ((!video && !janus_flags_is_set(&handle->webrtc_flags, JANUS_ICE_HANDLE_WEBRTC_HAS_AUDIO)) || (video && !janus_flags_is_set(&handle->webrtc_flags, JANUS_ICE_HANDLE_WEBRTC_HAS_VIDEO)))
     return;
+
+  gint pkts_in_queue;
+  if ((pkts_in_queue = g_async_queue_length(handle->queued_packets)) > max_size_pkt_queue)
+  {
+    JANUS_LOG(LOG_INFO, "[%" SCNu64 "] pkt queue has %d packets in it, discarding packet\n", handle->handle_id, pkts_in_queue);
+    return;
+  }
 
   //how full is the queued
   /*  
