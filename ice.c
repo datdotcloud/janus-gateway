@@ -4149,7 +4149,7 @@ static guint32 janus_rtp_ts_delta(guint32 start, guint32 end)
   return delta;
 }
 
-static gint janus_pkt_queue_depth_ms(janus_ice_handle *handle, gboolean video_pkt_queue, rtp_header *header)
+static gint janus_pkt_queue_depth_ms(janus_ice_handle *handle, gboolean video, rtp_header *header)
 {
   guint32 newest_ts = ntohl(header->timestamp);
   guint32 last_sent_ts;
@@ -4165,9 +4165,9 @@ static gint janus_pkt_queue_depth_ms(janus_ice_handle *handle, gboolean video_pk
     return 0;
   }
 
-  JANUS_LOG(LOG_INFO, "PKT_QUEUE: got %s packet with ts of %" G_GUINT32_FORMAT "\n", video_pkt_queue ? "video" : "audio", newest_ts);
+  JANUS_LOG(LOG_INFO, "PKT_QUEUE: got %s packet with ts of %" G_GUINT32_FORMAT "\n", video ? "video" : "audio", newest_ts);
 
-  if (video_pkt_queue)
+  if (video)
   {
     if (stream->video_rtcp_ctx == NULL || stream->rtp_component == NULL)
     {
@@ -4207,7 +4207,7 @@ static gint janus_pkt_queue_depth_ms(janus_ice_handle *handle, gboolean video_pk
   delta_ms = (gint)((guint64)delta_ts * (guint64)1000 / (guint64)ts_base_freq);
 
   JANUS_LOG(LOG_INFO, "PKT_QUEUE: %s packet queue has %d ms in it (last sent ts %" G_GUINT32_FORMAT ", newest ts %" G_GUINT32_FORMAT ", ts base %" G_GUINT32_FORMAT " \n",
-            video_pkt_queue ? "video" : "audio", delta_ms, last_sent_ts, newest_ts, ts_base_freq);
+            video ? "video" : "audio", delta_ms, last_sent_ts, newest_ts, ts_base_freq);
 
   return delta_ms;
 }
