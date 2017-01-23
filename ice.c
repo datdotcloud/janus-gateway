@@ -4157,15 +4157,18 @@ static gint janus_pkt_queue_depth_ms(janus_ice_handle *handle, gboolean video_pk
   guint32 ts_base_freq;
   gint delta_ms;
 
+  janus_ice_stream *stream;
+  rtcp_context *rtcp_ctx;
+
   if (video_pkt_queue)
   {
-    last_sent_ts = handle->video_last_ts;
-    ts_base_freq = handle->video_rtcp_ctx->tb;
+    last_sent_ts = handle->video_stream->video_last_ts;
+    ts_base_freq = handle->video_stream->video_rtcp_ctx->tb;
   }
   else
   {
-    last_sent_ts = handle->audio_last_ts;
-    ts_base_freq = handle->audio_rtcp_ctx->tb;
+    last_sent_ts = handle->audio_stream->audio_last_ts;
+    ts_base_freq = handle->audio_stream->audio_rtcp_ctx->tb;
   }
 
   delta_ts = janus_rtp_ts_delta(last_sent_ts, newest_ts);
