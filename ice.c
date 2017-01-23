@@ -4181,11 +4181,18 @@ static gint janus_pkt_queue_depth_ms(janus_ice_handle *handle, gboolean video_pk
     ts_base_freq = handle->audio_stream->audio_rtcp_ctx->tb;
   }
 
+  //TODO FIX ME 0 is a possible ts but there doesnt seem to be anything tracking when a packet is actually sent, will need to add this
+  if (last_sent_ts == 0)
+  {
+    return 0;
+  }
+
   delta_ts = janus_rtp_ts_delta(last_sent_ts, newest_ts);
 
   delta_ms = (gint)((guint64)delta_ts * (guint64)1000 / (guint64)ts_base_freq);
 
-  JANUS_LOG(LOG_VERB, "PKT_QUEUE: packet queue has %d ms in it (last sent ts %" G_GUINT32_FORMAT ", newest ts %" G_GUINT32_FORMAT ", ts base %" G_GUINT32_FORMAT " \n", delta_ms, last_sent_ts, newest_ts, ts_base_freq);
+  JANUS_LOG(LOG_VERB, "PKT_QUEUE: %s packet queue has %d ms in it (last sent ts %" G_GUINT32_FORMAT ", newest ts %" G_GUINT32_FORMAT ", ts base %" G_GUINT32_FORMAT " \n",
+            video_pkt_queue ? "video" : "audio", delta_ms, last_sent_ts, newest_ts, ts_base_freq);
 
   return delta_ms;
 }
