@@ -302,6 +302,7 @@ typedef struct janus_ice_queued_packet
   gint type;
   gboolean control;
   gboolean encrypted;
+  gboolean is_retransmit;
 } janus_ice_queued_packet;
 /* This is a static, fake, message we use as a trigger to send a DTLS alert */
 static janus_ice_queued_packet janus_ice_dtls_alert;
@@ -2421,6 +2422,7 @@ void janus_ice_cb_nice_recv(NiceAgent *agent, guint stream_id, guint component_i
                   pkt->type = video ? JANUS_ICE_PACKET_VIDEO : JANUS_ICE_PACKET_AUDIO;
                   pkt->control = FALSE;
                   pkt->encrypted = TRUE; /* This was already encrypted before */
+                  pkt->is_retransmit = TRUE;
                   if (handle->queued_packets != NULL)
                     g_async_queue_push(handle->queued_packets, pkt);
                   break;
@@ -4035,7 +4037,11 @@ void *janus_ice_send_thread(void *data)
               {
                 component->out_stats.audio_packets++;
                 component->out_stats.audio_bytes += sent;
-                stream->audio_last_ts = timestamp;
+
+                if (pkt->is_retransmit == FALSE)
+                {
+                  stream->audio_last_ts = timestamp;
+                }
                 /* Let's check if this was G.711: in case we may need to change the timestamp base */
                 rtcp_context *rtcp_ctx = video ? stream->video_rtcp_ctx : stream->audio_rtcp_ctx;
                 int pt = header->type;
@@ -4046,7 +4052,10 @@ void *janus_ice_send_thread(void *data)
               {
                 component->out_stats.video_packets++;
                 component->out_stats.video_bytes += sent;
-                stream->video_last_ts = timestamp;
+                if (pkt->is_retransmit == FALSE)
+                {
+                  stream->video_last_ts = timestamp;
+                }
               }
             }
             if (max_nack_queue > 0)
@@ -4234,6 +4243,7 @@ void janus_ice_relay_rtp(janus_ice_handle *handle, int video, char *buf, int len
   pkt->type = video ? JANUS_ICE_PACKET_VIDEO : JANUS_ICE_PACKET_AUDIO;
   pkt->control = FALSE;
   pkt->encrypted = FALSE;
+  pkt->is_retransmit = FALSE;
   if (handle->queued_packets != NULL)
     g_async_queue_push(handle->queued_packets, pkt);
 }
@@ -4264,6 +4274,7 @@ void janus_ice_relay_rtcp_internal(janus_ice_handle *handle, int video, char *bu
   pkt->type = video ? JANUS_ICE_PACKET_VIDEO : JANUS_ICE_PACKET_AUDIO;
   pkt->control = TRUE;
   pkt->encrypted = FALSE;
+  pkt->is_retransmit = FALSE;
   if (handle->queued_packets != NULL)
     g_async_queue_push(handle->queued_packets, pkt);
   if (rtcp_buf != buf)
@@ -4291,6 +4302,7 @@ void janus_ice_relay_data(janus_ice_handle *handle, char *buf, int len)
   pkt->type = JANUS_ICE_PACKET_DATA;
   pkt->control = FALSE;
   pkt->encrypted = FALSE;
+  pkt->is_retransmit = FALSE;
   if (handle->queued_packets != NULL)
     g_async_queue_push(handle->queued_packets, pkt);
 }
