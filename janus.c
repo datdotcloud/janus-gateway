@@ -3901,7 +3901,7 @@ gint main(int argc, char *argv[])
   item = janus_config_get_item_drilldown(config, "media", "max_pkt_queue_depth_ms");
   if (item && item->value)
   {
-    max_pkt_queue_depth_ms = atoi(temp->value);
+    max_pkt_queue_depth_ms = atoi(item->value);
   }
   /* Check if we need to enable the ICE Lite mode */
   item = janus_config_get_item_drilldown(config, "nat", "ice_lite");
