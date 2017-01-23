@@ -4157,12 +4157,18 @@ static gint janus_pkt_queue_depth_ms(janus_ice_handle *handle, gboolean video_pk
   guint32 ts_base_freq;
   gint delta_ms;
 
-  janus_ice_stream *stream;
-  rtcp_context *rtcp_ctx;
+  janus_ice_component *component;
 
   if (video_pkt_queue)
   {
-    if (handle->video_stream == NULL || handle->video_stream->video_rtcp_ctx == NULL)
+    if (handle->video_stream == NULL || handle->video_stream->video_rtcp_ctx == NULL || handle->video_stream->rtp_component == NULL)
+    {
+      return 0;
+    }
+
+    component = handle->video_stream->rtp_component;
+
+    if (component->out_stats.video_packets <= 0)
     {
       return 0;
     }
@@ -4172,19 +4178,20 @@ static gint janus_pkt_queue_depth_ms(janus_ice_handle *handle, gboolean video_pk
   }
   else
   {
-    if (handle->audio_stream == NULL || handle->audio_stream->audio_rtcp_ctx == NULL)
+    if (handle->audio_stream == NULL || handle->audio_stream->audio_rtcp_ctx == NULL || handle->audio_stream->rtp_component == NULL)
+    {
+      return 0;
+    }
+
+    component = handle->audio_stream->rtp_component;
+
+    if (component->out_stats.audio_packets <= 0)
     {
       return 0;
     }
 
     last_sent_ts = handle->audio_stream->audio_last_ts;
     ts_base_freq = handle->audio_stream->audio_rtcp_ctx->tb;
-  }
-
-  //TODO FIX ME 0 is a possible ts but there doesnt seem to be anything tracking when a packet is actually sent, will need to add this
-  if (last_sent_ts == 0)
-  {
-    return 0;
   }
 
   delta_ts = janus_rtp_ts_delta(last_sent_ts, newest_ts);
