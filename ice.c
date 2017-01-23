@@ -271,6 +271,7 @@ gboolean janus_ice_is_ignored(const char *ip)
 /* RTP/RTCP port range */
 uint16_t rtp_range_min = 0;
 uint16_t rtp_range_max = 0;
+int max_pkt_queue_in_ms = MAX_QUEUE_DEPTH_MS;
 
 /* Helpers to demultiplex protocols */
 static gboolean janus_is_dtls(gchar *buf)
@@ -691,7 +692,7 @@ void janus_ice_trickle_destroy(janus_ice_trickle *trickle)
 }
 
 /* libnice initialization */
-void janus_ice_init(gboolean ice_lite, gboolean ice_tcp, gboolean ipv6, uint16_t rtp_min_port, uint16_t rtp_max_port)
+void janus_ice_init(gboolean ice_lite, gboolean ice_tcp, gboolean ipv6, uint16_t rtp_min_port, uint16_t rtp_max_port, int max_pkt_queue_depth_ms)
 {
   janus_ice_lite_enabled = ice_lite;
   janus_ice_tcp_enabled = ice_tcp;
@@ -734,6 +735,9 @@ void janus_ice_init(gboolean ice_lite, gboolean ice_tcp, gboolean ipv6, uint16_t
     JANUS_LOG(LOG_INFO, "ICE port range: %" SCNu16 "-%" SCNu16 "\n", rtp_range_min, rtp_range_max);
 #endif
   }
+
+  max_pkt_queue_in_ms = max_pkt_queue_depth_ms;
+  JANUS_LOG(LOG_INFO, "ICE maximum packet queue size in ms: %d\n", max_pkt_queue_in_ms);
 
   /* We keep track of old plugin sessions to avoid problems */
   old_plugin_sessions = g_hash_table_new(NULL, NULL);
@@ -4131,9 +4135,6 @@ void *janus_ice_send_thread(void *data)
   return NULL;
 }
 
-//TODO: add this to the config
-#define MAX_QUEUE_DEPTH_MS 1000
-
 static guint32 janus_rtp_ts_delta(guint32 start, guint32 end)
 {
   guint32 delta;
@@ -4216,7 +4217,7 @@ void janus_ice_relay_rtp(janus_ice_handle *handle, int video, char *buf, int len
 
   //how full is the queued
   gint queue_ms;
-  if ((queue_ms = janus_pkt_queue_depth_ms(handle, video, (rtp_header *)buf)) > MAX_QUEUE_DEPTH_MS)
+  if ((queue_ms = janus_pkt_queue_depth_ms(handle, video, (rtp_header *)buf)) > max_pkt_queue_in_ms)
   {
     JANUS_LOG(LOG_INFO, "[%" SCNu64 "] %s pkt queue has %d ms in it, discarding packet\n", handle->handle_id, video ? "video" : "audio", queue_ms);
     return;
