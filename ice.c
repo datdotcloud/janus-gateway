@@ -4157,43 +4157,49 @@ static gint janus_pkt_queue_depth_ms(janus_ice_handle *handle, gboolean video_pk
   guint32 ts_base_freq;
   gint delta_ms;
 
+  janus_ice_stream *stream = janus_flags_is_set(&handle->webrtc_flags, JANUS_ICE_HANDLE_WEBRTC_BUNDLE) ? (handle->audio_stream ? handle->audio_stream : handle->video_stream) : (video ? handle->video_stream : handle->audio_stream);
   janus_ice_component *component;
+
+  if (stream == NULL)
+  {
+    return 0;
+  }
 
   JANUS_LOG(LOG_INFO, "PKT_QUEUE: got %s packet with ts of %" G_GUINT32_FORMAT "\n", video_pkt_queue ? "video" : "audio", newest_ts);
 
   if (video_pkt_queue)
   {
-    if (handle->video_stream == NULL || handle->video_stream->video_rtcp_ctx == NULL || handle->video_stream->rtp_component == NULL)
+    if (stream->video_rtcp_ctx == NULL || stream->rtp_component == NULL)
     {
       return 0;
     }
 
-    component = handle->video_stream->rtp_component;
+    component = stream->rtp_component;
 
     if (component->out_stats.video_packets <= 0)
     {
       return 0;
     }
 
-    last_sent_ts = handle->video_stream->video_last_ts;
-    ts_base_freq = handle->video_stream->video_rtcp_ctx->tb;
+    last_sent_ts = stream->video_last_ts;
+    ts_base_freq = stream->video_rtcp_ctx->tb;
   }
   else
   {
-    if (handle->audio_stream == NULL || handle->audio_stream->audio_rtcp_ctx == NULL || handle->audio_stream->rtp_component == NULL)
+    if (stream->audio_rtcp_ctx == NULL || stream->rtp_component == NULL)
     {
       return 0;
     }
 
-    component = handle->audio_stream->rtp_component;
+    component = stream->rtp_component;
 
     if (component->out_stats.audio_packets <= 0)
     {
       return 0;
     }
 
-    last_sent_ts = handle->audio_stream->audio_last_ts;
-    ts_base_freq = handle->audio_stream->audio_rtcp_ctx->tb;
+    last_sent_ts = stream->audio_last_ts;
+    ts_base_freq = stream->audio_rtcp_ctx->tb;
   }
 
   delta_ts = janus_rtp_ts_delta(last_sent_ts, newest_ts);
