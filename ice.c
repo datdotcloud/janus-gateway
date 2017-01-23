@@ -4162,11 +4162,21 @@ static gint janus_pkt_queue_depth_ms(janus_ice_handle *handle, gboolean video_pk
 
   if (video_pkt_queue)
   {
+    if (handle->video_stream == NULL || handle->video_stream->video_rtcp_ctx == NULL)
+    {
+      return 0;
+    }
+
     last_sent_ts = handle->video_stream->video_last_ts;
     ts_base_freq = handle->video_stream->video_rtcp_ctx->tb;
   }
   else
   {
+    if (handle->audio_stream == NULL || handle->audio_stream->audio_rtcp_ctx == NULL)
+    {
+      return 0;
+    }
+
     last_sent_ts = handle->audio_stream->audio_last_ts;
     ts_base_freq = handle->audio_stream->audio_rtcp_ctx->tb;
   }
