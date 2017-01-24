@@ -3576,10 +3576,8 @@ void *janus_ice_send_thread(void *data)
     {
       gint64 avg_us_per_loop;
 
-      avg_us_per_loop = profile_us_total / profile_us_samples;
-
       JANUS_LOG(LOG_INFO, "sendice thread profile:  %" G_GINT64_FORMAT " us total, avg per call: %" G_GINT64_FORMAT " us, total calls: %" G_GINT64_FORMAT "\n",
-                handle->handle_id);
+                profile_us_total, profile_us_total / profile_us_samples, profile_us_total);
       profile_us_total = 0;
       profile_us_samples = 0;
       profile_timer_start = janus_get_monotonic_time();
