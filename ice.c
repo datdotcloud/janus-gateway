@@ -32,6 +32,9 @@
 #include "rtcp.h"
 #include "apierror.h"
 
+gint64 profile_us_start, profile_us_stop, profile_us_delta, profile_us_total = 0, profile_us_samples = 0;
+gint64 profile_timer_start;
+
 /* STUN server/port, if any */
 static char *janus_stun_server = NULL;
 static uint16_t janus_stun_port = 0;
@@ -3561,8 +3564,27 @@ void *janus_ice_send_thread(void *data)
          audio_rtcp_last_rr = before, audio_rtcp_last_sr = before,
          video_rtcp_last_rr = before, video_rtcp_last_sr = before,
          last_nack_cleanup = before;
+
+  if (profile_us_samples == 0)
+  {
+    profile_timer_start = janus_get_monotonic_time();
+  }
+
   while (!janus_flags_is_set(&handle->webrtc_flags, JANUS_ICE_HANDLE_WEBRTC_ALERT))
   {
+    if ((janus_get_monotonic_time() - profile_timer_start) >= (G_USEC_PER_SEC * 5))
+    {
+      gint64 avg_us_per_loop;
+
+      avg_us_per_loop = profile_us_total / profile_us_samples;
+
+      JANUS_LOG(LOG_VERB, "sendice thread profile:  %" G_GINT64_FORMAT " us total, avg per call: %" G_GINT64_FORMAT " us, total calls: %" G_GINT64_FORMAT "\n",
+                handle->handle_id);
+      profile_us_total = 0;
+      profile_us_samples = 0;
+      profile_timer_start = janus_get_monotonic_time();
+    }
+
     if (handle->queued_packets != NULL)
     {
       pkt = g_async_queue_timeout_pop(handle->queued_packets, 500000);
@@ -4014,7 +4036,13 @@ void *janus_ice_send_thread(void *data)
             header->ssrc = htonl(video ? stream->video_ssrc : stream->audio_ssrc);
           }
           int protected = pkt->length;
+
+          profile_us_start = janus_get_real_time();
           int res = srtp_protect(component->dtls->srtp_out, sbuf, &protected);
+          profile_us_stop = janus_get_real_time();
+          profile_us_delta = profile_us_stop - profile_us_start;
+          profile_us_total += profile_us_delta;
+          profile_us_samples++;
           //~ JANUS_LOG(LOG_VERB, "[%"SCNu64"] ... SRTP protect %s (len=%d-->%d)...\n", handle->handle_id, janus_get_srtp_error(res), pkt->length, protected);
           if (res != err_status_ok)
           {
@@ -4241,7 +4269,8 @@ void janus_ice_relay_rtp(janus_ice_handle *handle, int video, char *buf, int len
     return;
   }
 
-  //how full is the queued
+  //TODO:  this wont work correctly until there is a jitter buffer
+  //how full is the queued in msg_type
   /*  
   gint queue_ms;
   if ((queue_ms = janus_pkt_queue_depth_ms(handle, video, (rtp_header *)buf)) > max_pkt_queue_in_ms)
