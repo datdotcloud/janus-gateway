@@ -32,6 +32,9 @@
 #include "rtcp.h"
 #include "apierror.h"
 
+gint64 profile_us_start, profile_us_stop, profile_us_delta, profile_us_total = 0, profile_us_samples = 0;
+gint64 profile_timer_start;
+
 /* STUN server/port, if any */
 static char *janus_stun_server = NULL;
 static uint16_t janus_stun_port = 0;
@@ -245,6 +248,8 @@ gboolean janus_ice_is_ignored(const char *ip) {
 /* RTP/RTCP port range */
 uint16_t rtp_range_min = 0;
 uint16_t rtp_range_max = 0;
+int max_pkt_queue_in_ms = MAX_QUEUE_DEPTH_MS;
+int max_size_pkt_queue = MAX_QUEUE_DEPTH;
 
 
 /* Helpers to demultiplex protocols */
@@ -616,7 +621,7 @@ void janus_ice_trickle_destroy(janus_ice_trickle *trickle) {
 
 
 /* libnice initialization */
-void janus_ice_init(gboolean ice_lite, gboolean ice_tcp, gboolean ipv6, uint16_t rtp_min_port, uint16_t rtp_max_port) {
+void janus_ice_init(gboolean ice_lite, gboolean ice_tcp, gboolean ipv6, uint16_t rtp_min_port, uint16_t rtp_max_port, int max_pkt_queue_depth, int max_pkt_queue_depth_ms) {
 	janus_ice_lite_enabled = ice_lite;
 	janus_ice_tcp_enabled = ice_tcp;
 	janus_ipv6_enabled = ipv6;
@@ -653,6 +658,18 @@ void janus_ice_init(gboolean ice_lite, gboolean ice_tcp, gboolean ipv6, uint16_t
 		JANUS_LOG(LOG_INFO, "ICE port range: %"SCNu16"-%"SCNu16"\n", rtp_range_min, rtp_range_max);
 #endif
 	}
+
+  if (max_pkt_queue_depth > 0)
+  {
+    max_size_pkt_queue = max_pkt_queue_depth;
+  }
+  JANUS_LOG(LOG_INFO, "ICE maximum packet queue size: %d\n", max_size_pkt_queue);
+
+  if (max_pkt_queue_depth_ms > 0)
+  {
+    max_pkt_queue_in_ms = max_pkt_queue_depth_ms;
+  }
+  JANUS_LOG(LOG_INFO, "ICE maximum packet queue size in ms: %d\n", max_pkt_queue_in_ms);  
 
 	/* We keep track of old plugin sessions to avoid problems */
 	old_plugin_sessions = g_hash_table_new(NULL, NULL);
@@ -3094,7 +3111,24 @@ void *janus_ice_send_thread(void *data) {
 		audio_rtcp_last_rr = before, audio_rtcp_last_sr = before,
 		video_rtcp_last_rr = before, video_rtcp_last_sr = before,
 		last_nack_cleanup = before;
+
+  if (profile_us_samples == 0)
+  {
+    profile_timer_start = janus_get_monotonic_time();
+  }
+
 	while(!janus_flags_is_set(&handle->webrtc_flags, JANUS_ICE_HANDLE_WEBRTC_ALERT)) {
+
+    if ((janus_get_monotonic_time() - profile_timer_start) >= (G_USEC_PER_SEC * 5)){
+      gint64 avg_us_per_loop;
+
+      JANUS_LOG(LOG_INFO, "sendice thread profile:  %" G_GINT64_FORMAT " us total, avg per call: %" G_GINT64_FORMAT " us, total calls: %" G_GINT64_FORMAT "\n",
+                profile_us_total, profile_us_total / profile_us_samples, profile_us_samples);
+      profile_us_total = 0;
+      profile_us_samples = 0;
+      profile_timer_start = janus_get_monotonic_time();
+    }
+
 		if(handle->queued_packets != NULL) {
 			pkt = g_async_queue_timeout_pop(handle->queued_packets, 500000);
 		} else {
@@ -3477,7 +3511,12 @@ void *janus_ice_send_thread(void *data) {
 						header->ssrc = htonl(video ? stream->video_ssrc : stream->audio_ssrc);
 					}
 					int protected = pkt->length;
-					int res = srtp_protect(component->dtls->srtp_out, sbuf, &protected);
+          profile_us_start = janus_get_real_time();
+          int res = srtp_protect(component->dtls->srtp_out, sbuf, &protected);
+          profile_us_stop = janus_get_real_time();
+          profile_us_delta = profile_us_stop - profile_us_start;
+          profile_us_total += profile_us_delta;
+          profile_us_samples++;
 					//~ JANUS_LOG(LOG_VERB, "[%"SCNu64"] ... SRTP protect %s (len=%d-->%d)...\n", handle->handle_id, janus_get_srtp_error(res), pkt->length, protected);
 					if(res != err_status_ok) {
 						rtp_header *header = (rtp_header *)sbuf;
@@ -3592,12 +3631,104 @@ void *janus_ice_send_thread(void *data) {
 	return NULL;
 }
 
+static guint32 janus_rtp_ts_delta(guint32 start, guint32 end)
+{
+  guint32 delta;
+  if (start <= end)
+  {
+    delta = end - start;
+  }
+  else //wrap around case
+  {
+    delta = G_MAXUINT32 - start + end + 1;
+  }
+
+  return delta;
+}
+
+static gint janus_pkt_queue_depth_ms(janus_ice_handle *handle, gboolean video, rtp_header *header)
+{
+  guint32 newest_ts = ntohl(header->timestamp);
+  guint32 last_sent_ts;
+  guint32 delta_ts;
+  guint32 ts_base_freq;
+  gint delta_ms;
+
+  janus_ice_stream *stream = janus_flags_is_set(&handle->webrtc_flags, JANUS_ICE_HANDLE_WEBRTC_BUNDLE) ? (handle->audio_stream ? handle->audio_stream : handle->video_stream) : (video ? handle->video_stream : handle->audio_stream);
+  janus_ice_component *component;
+
+  if (stream == NULL)
+  {
+    return 0;
+  }
+
+  if (video)
+  {
+    if (stream->video_rtcp_ctx == NULL || stream->rtp_component == NULL)
+    {
+      return 0;
+    }
+
+    component = stream->rtp_component;
+
+    if (component->out_stats.video_packets <= 0)
+    {
+      return 0;
+    }
+
+    last_sent_ts = stream->video_last_ts;
+    ts_base_freq = stream->video_rtcp_ctx->tb;
+  }
+  else
+  {
+    if (stream->audio_rtcp_ctx == NULL || stream->rtp_component == NULL)
+    {
+      return 0;
+    }
+
+    component = stream->rtp_component;
+
+    if (component->out_stats.audio_packets <= 0)
+    {
+      return 0;
+    }
+
+    last_sent_ts = stream->audio_last_ts;
+    ts_base_freq = stream->audio_rtcp_ctx->tb;
+  }
+
+  delta_ts = janus_rtp_ts_delta(last_sent_ts, newest_ts);
+
+  delta_ms = (gint)((guint64)delta_ts * (guint64)1000 / (guint64)ts_base_freq);
+
+  return delta_ms;
+}
+
 void janus_ice_relay_rtp(janus_ice_handle *handle, int video, char *buf, int len) {
 	if(!handle || buf == NULL || len < 1)
 		return;
 	if((!video && !janus_flags_is_set(&handle->webrtc_flags, JANUS_ICE_HANDLE_WEBRTC_HAS_AUDIO))
 			|| (video && !janus_flags_is_set(&handle->webrtc_flags, JANUS_ICE_HANDLE_WEBRTC_HAS_VIDEO)))
 		return;
+
+  gint pkts_in_queue;
+  if ((pkts_in_queue = g_async_queue_length(handle->queued_packets)) > max_size_pkt_queue)
+  {
+    JANUS_LOG(LOG_INFO, "[%" SCNu64 "] pkt queue has %d packets in it, discarding packet\n", handle->handle_id, pkts_in_queue);
+    return;
+  }
+
+  //TODO:  this wont work correctly until there is a jitter buffer
+  //how full is the queued in msg_type
+  /*  
+  gint queue_ms;
+  if ((queue_ms = janus_pkt_queue_depth_ms(handle, video, (rtp_header *)buf)) > max_pkt_queue_in_ms)
+  {
+    JANUS_LOG(LOG_INFO, "[%" SCNu64 "] %s pkt queue has %d ms in it, discarding packet\n", handle->handle_id, video ? "video" : "audio", queue_ms);
+    return;
+  }
+*/
+
 	/* Queue this packet */
 	janus_ice_queued_packet *pkt = (janus_ice_queued_packet *)g_malloc0(sizeof(janus_ice_queued_packet));
 	pkt->data = g_malloc0(len);
