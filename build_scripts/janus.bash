@@ -10,6 +10,7 @@ PLUGIN_OPTS="--disable-plugin-textroom --disable-plugin-audiobridge --disable-pl
 GENERAL_OPTS="--disable-data-channels --disable-docs --disable-rabbitmq --disable-unix-sockets --disable-mqtt --enable-libsrtp2"
 ./configure --prefix=/opt/janus $PLUGIN_OPTS $GENERAL_OPTS
 #./configure --prefix=/opt/janus $PLUGIN_OPTS $GENERAL_OPTS LDFLAGS="-L/lib64 -Wl,-rpath=/lib64" CFLAGS="-I/usr/include"
+make clean
 make
 if [[ -z "$1" ]]; then
 echo -e "\e[7mInstalling to /opt/janus-impstar\e[27m"
