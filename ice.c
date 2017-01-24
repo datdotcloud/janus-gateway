@@ -3518,7 +3518,7 @@ void *janus_ice_send_thread(void *data) {
 			          profile_us_total += profile_us_delta;
 			          profile_us_samples++;
 					//~ JANUS_LOG(LOG_VERB, "[%"SCNu64"] ... SRTP protect %s (len=%d-->%d)...\n", handle->handle_id, janus_get_srtp_error(res), pkt->length, protected);
-					if(res != err_status_ok) {
+					if(res != srtp_err_status_ok) {
 						rtp_header *header = (rtp_header *)sbuf;
 						guint32 ssrc = ntohl(header->ssrc);
 						guint32 timestamp = ntohl(header->timestamp);
