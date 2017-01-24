@@ -59,6 +59,7 @@ Janus.init = function(options) {
 		// Console logging (all debugging disabled by default)
 		Janus.trace = Janus.noop;
 		Janus.debug = Janus.noop;
+		Janus.vdebug = Janus.noop;
 		Janus.log = Janus.noop;
 		Janus.warn = Janus.noop;
 		Janus.error = Janus.noop;
@@ -66,6 +67,7 @@ Janus.init = function(options) {
 			// Enable all debugging levels
 			Janus.trace = console.trace.bind(console);
 			Janus.debug = console.debug.bind(console);
+			Janus.vdebug = console.debug.bind(console);
 			Janus.log = console.log.bind(console);
 			Janus.warn = console.warn.bind(console);
 			Janus.error = console.error.bind(console);
@@ -79,6 +81,9 @@ Janus.init = function(options) {
 					case "debug":
 						Janus.debug = console.debug.bind(console);
 						break;
+					case "vdebug":
+						Janus.vdebug = console.debug.bind(console);
+						break;
 					case "log":
 						Janus.log = console.log.bind(console);
 						break;
@@ -89,7 +94,7 @@ Janus.init = function(options) {
 						Janus.error = console.error.bind(console);
 						break;
 					default:
-						console.error("Unknown debugging option '" + d + "' (supported: 'trace', 'debug', 'log', warn', 'error')");
+						console.error("Unknown debugging option '" + d + "' (supported: 'trace', 'debug', 'vdebug', 'log', warn', 'error')");
 						break;
 				}
 			}
@@ -162,7 +167,7 @@ Janus.init = function(options) {
 				if(Janus.sessions[s] !== null && Janus.sessions[s] !== undefined &&
 						Janus.sessions[s].destroyOnUnload) {
 					Janus.log("Destroying session " + s);
-					Janus.sessions[s].destroy();
+					Janus.sessions[s].destroy({asyncRequest: false});
 				}
 			}
 			if(oldOBF && typeof oldOBF == "function")
@@ -195,12 +200,14 @@ Janus.init = function(options) {
 				}
 			}
 			if(src === 'adapter.js') {
-				if(navigator.getUserMedia && navigator.mediaDevices.getUserMedia && window.RTCPeerConnection) {
-					// Already loaded
-					Janus.debug(src + " already loaded, skipping");
-					done();
-					return;
-				}
+				try {
+					if(adapter) {
+						// Already loaded
+						Janus.debug(src + " already loaded, skipping");
+						done();
+						return;
+					}
+				} catch(e) {};
 			}
 			var oHead = document.getElementsByTagName('head').item(0);
 			var oScript = document.createElement("script");
@@ -265,6 +272,7 @@ function Janus(gatewayCallbacks) {
 	var iceServers = gatewayCallbacks.iceServers;
 	if(iceServers === undefined || iceServers === null)
 		iceServers = [{urls: "stun:stun.l.google.com:19302"}];
+	var iceTransportPolicy = gatewayCallbacks.iceTransportPolicy;
 	// Whether IPv6 candidates should be gathered
 	var ipv6Support = gatewayCallbacks.ipv6;
 	if(ipv6Support === undefined || ipv6Support === null)
@@ -356,8 +364,6 @@ function Janus(gatewayCallbacks) {
 		retries = 0;
 		if(!websockets && sessionId !== undefined && sessionId !== null)
 			setTimeout(eventHandler, 200);
-		Janus.debug("Got event on session " + sessionId);
-		Janus.debug(json);
 		if(!websockets && $.isArray(json)) {
 			// We got an array: it means we passed a maxev > 1, iterate on all objects
 			for(var i=0; i<json.length; i++) {
@@ -367,9 +373,12 @@ function Janus(gatewayCallbacks) {
 		}
 		if(json["janus"] === "keepalive") {
 			// Nothing happened
+			Janus.vdebug("Got a keepalive on session " + sessionId);
 			return;
 		} else if(json["janus"] === "ack") {
 			// Just an ack, we can probably ignore
+			Janus.debug("Got an ack on session " + sessionId);
+			Janus.debug(json);
 			var transaction = json["transaction"];
 			if(transaction !== null && transaction !== undefined) {
 				var reportSuccess = transactions[transaction];
@@ -381,6 +390,8 @@ function Janus(gatewayCallbacks) {
 			return;
 		} else if(json["janus"] === "success") {
 			// Success!
+			Janus.debug("Got a success on session " + sessionId);
+			Janus.debug(json);
 			var transaction = json["transaction"];
 			if(transaction !== null && transaction !== undefined) {
 				var reportSuccess = transactions[transaction];
@@ -392,6 +403,8 @@ function Janus(gatewayCallbacks) {
 			return;
 		} else if(json["janus"] === "webrtcup") {
 			// The PeerConnection with the gateway is up! Notify this
+			Janus.debug("Got a webrtcup event on session " + sessionId);
+			Janus.debug(json);
 			var sender = json["sender"];
 			if(sender === undefined || sender === null) {
 				Janus.warn("Missing sender...");
@@ -406,6 +419,8 @@ function Janus(gatewayCallbacks) {
 			return;
 		} else if(json["janus"] === "hangup") {
 			// A plugin asked the core to hangup a PeerConnection on one of our handles
+			Janus.debug("Got a hangup event on session " + sessionId);
+			Janus.debug(json);
 			var sender = json["sender"];
 			if(sender === undefined || sender === null) {
 				Janus.warn("Missing sender...");
@@ -420,6 +435,8 @@ function Janus(gatewayCallbacks) {
 			pluginHandle.hangup();
 		} else if(json["janus"] === "detached") {
 			// A plugin asked the core to detach one of our handles
+			Janus.debug("Got a detached event on session " + sessionId);
+			Janus.debug(json);
 			var sender = json["sender"];
 			if(sender === undefined || sender === null) {
 				Janus.warn("Missing sender...");
@@ -434,6 +451,8 @@ function Janus(gatewayCallbacks) {
 			pluginHandle.detach();
 		} else if(json["janus"] === "media") {
 			// Media started/stopped flowing
+			Janus.debug("Got a media event on session " + sessionId);
+			Janus.debug(json);
 			var sender = json["sender"];
 			if(sender === undefined || sender === null) {
 				Janus.warn("Missing sender...");
@@ -445,9 +464,25 @@ function Janus(gatewayCallbacks) {
 				return;
 			}
 			pluginHandle.mediaState(json["type"], json["receiving"]);
+		} else if(json["janus"] === "slowlink") {
+			Janus.debug("Got a slowlink event on session " + sessionId);
+			Janus.debug(json);
+			// Trouble uplink or downlink
+			var sender = json["sender"];
+			if(sender === undefined || sender === null) {
+				Janus.warn("Missing sender...");
+				return;
+			}
+			var pluginHandle = pluginHandles[sender];
+			if(pluginHandle === undefined || pluginHandle === null) {
+				Janus.warn("This handle is not attached to this session");
+				return;
+			}
+			pluginHandle.slowLink(json["uplink"], json["nacks"]);
 		} else if(json["janus"] === "error") {
 			// Oops, something wrong happened
 			Janus.error("Ooops: " + json["error"].code + " " + json["error"].reason);	// FIXME
+			Janus.debug(json);
 			var transaction = json["transaction"];
 			if(transaction !== null && transaction !== undefined) {
 				var reportSuccess = transactions[transaction];
@@ -458,6 +493,8 @@ function Janus(gatewayCallbacks) {
 			}
 			return;
 		} else if(json["janus"] === "event") {
+			Janus.debug("Got a plugin event on session " + sessionId);
+			Janus.debug(json);
 			var sender = json["sender"];
 			if(sender === undefined || sender === null) {
 				Janus.warn("Missing sender...");
@@ -491,7 +528,8 @@ function Janus(gatewayCallbacks) {
 				Janus.debug("No provided notification callback");
 			}
 		} else {
-			Janus.warn("Unknown message '" + json["janus"] + "'");
+			Janus.warn("Unkown message/event  '" + json["janus"] + "' on session " + sessionId);
+			Janus.debug(json);
 		}
 	}
 
@@ -632,12 +670,14 @@ function Janus(gatewayCallbacks) {
 	}
 
 	// Private method to destroy a session
-	function destroySession(callbacks, syncRequest) {
-		syncRequest = (syncRequest === true);
-		Janus.log("Destroying session " + sessionId + " (sync=" + syncRequest + ")");
+	function destroySession(callbacks) {
 		callbacks = callbacks || {};
 		// FIXME This method triggers a success even when we fail
 		callbacks.success = (typeof callbacks.success == "function") ? callbacks.success : jQuery.noop;
+		var asyncRequest = true;
+		if(callbacks.asyncRequest !== undefined && callbacks.asyncRequest !== null)
+			asyncRequest = (callbacks.asyncRequest === true);
+		Janus.log("Destroying session " + sessionId + " (async=" + asyncRequest + ")");
 		if(!connected) {
 			Janus.warn("Is the gateway down? (connected=false)");
 			callbacks.success();
@@ -654,7 +694,7 @@ function Janus(gatewayCallbacks) {
 		for(var ph in pluginHandles) {
 			var phv = pluginHandles[ph];
 			Janus.log("Destroying handle " + phv.id + " (" + phv.plugin + ")");
-			destroyHandle(phv.id, null, syncRequest);
+			destroyHandle(phv.id, {asyncRequest: asyncRequest});
 		}
 		// Ok, go on
 		var request = { "janus": "destroy", "transaction": randomString(12) };
@@ -699,7 +739,7 @@ function Janus(gatewayCallbacks) {
 		$.ajax({
 			type: 'POST',
 			url: server + "/" + sessionId,
-			async: syncRequest,	// Sometimes we need false here, or destroying in onbeforeunload won't work
+			async: asyncRequest,	// Sometimes we need false here, or destroying in onbeforeunload won't work
 			cache: false,
 			contentType: "application/json",
 			data: JSON.stringify(request),
@@ -1031,8 +1071,8 @@ function Janus(gatewayCallbacks) {
 			request["token"] = token;
 		if(apisecret !== null && apisecret !== undefined)
 			request["apisecret"] = apisecret;
-		Janus.debug("Sending trickle candidate (handle=" + handleId + "):");
-		Janus.debug(request);
+		Janus.vdebug("Sending trickle candidate (handle=" + handleId + "):");
+		Janus.vdebug(request);
 		if(websockets) {
 			request["session_id"] = sessionId;
 			request["handle_id"] = handleId;
@@ -1046,8 +1086,8 @@ function Janus(gatewayCallbacks) {
 			contentType: "application/json",
 			data: JSON.stringify(request),
 			success: function(json) {
-				Janus.debug("Candidate sent!");
-				Janus.debug(json);
+				Janus.vdebug("Candidate sent!");
+				Janus.vdebug(json);
 				if(json["janus"] !== "ack") {
 					Janus.error("Ooops: " + json["error"].code + " " + json["error"].reason);	// FIXME
 					return;
@@ -1132,17 +1172,20 @@ function Janus(gatewayCallbacks) {
 		var gap = dtmf.gap;
 		if(gap === null || gap === undefined)
 			gap = 50;	// We choose 50ms as the default gap between tones
-		Janus.debug("Sending DTMF string " + tones + " (duration " + duration + "ms, gap " + gap + "ms");
+		Janus.debug("Sending DTMF string " + tones + " (duration " + duration + "ms, gap " + gap + "ms)");
 		config.dtmfSender.insertDTMF(tones, duration, gap);
 	}
 
 	// Private method to destroy a plugin handle
-	function destroyHandle(handleId, callbacks, syncRequest) {
-		syncRequest = (syncRequest === true);
-		Janus.log("Destroying handle " + handleId + " (sync=" + syncRequest + ")");
+	function destroyHandle(handleId, callbacks) {
 		callbacks = callbacks || {};
 		callbacks.success = (typeof callbacks.success == "function") ? callbacks.success : jQuery.noop;
 		callbacks.error = (typeof callbacks.error == "function") ? callbacks.error : jQuery.noop;
+		Janus.warn(callbacks);
+		var asyncRequest = true;
+		if(callbacks.asyncRequest !== undefined && callbacks.asyncRequest !== null)
+			asyncRequest = (callbacks.asyncRequest === true);
+		Janus.log("Destroying handle " + handleId + " (async=" + asyncRequest + ")");
 		cleanupWebrtc(handleId);
 		if(!connected) {
 			Janus.warn("Is the gateway down? (connected=false)");
@@ -1165,7 +1208,7 @@ function Janus(gatewayCallbacks) {
 		$.ajax({
 			type: 'POST',
 			url: server + "/" + sessionId + "/" + handleId,
-			async: syncRequest,	// Sometimes we need false here, or destroying in onbeforeunload won't work
+			async: asyncRequest,	// Sometimes we need false here, or destroying in onbeforeunload won't work
 			cache: false,
 			contentType: "application/json",
 			data: JSON.stringify(request),
@@ -1200,7 +1243,7 @@ function Janus(gatewayCallbacks) {
 		var config = pluginHandle.webrtcStuff;
 		Janus.debug("streamsDone:", stream);
 		config.myStream = stream;
-		var pc_config = {"iceServers": iceServers};
+		var pc_config = {"iceServers": iceServers, "iceTransportPolicy": iceTransportPolicy};
 		//~ var pc_constraints = {'mandatory': {'MozDontOfferDataChannel':true}};
 		var pc_constraints = {
 			"optional": [{"DtlsSrtpKeyAgreement": true}]
@@ -1586,7 +1629,9 @@ function Janus(gatewayCallbacks) {
 					// Check whether a missing device is really a problem
 					var audioSend = isAudioSendEnabled(media);
 					var videoSend = isVideoSendEnabled(media);
-					if(audioSend || videoSend) {
+					var needAudioDevice = isAudioSendRequired(media);
+					var needVideoDevice = isVideoSendRequired(media);
+					if(audioSend || videoSend || needAudioDevice || needVideoDevice) {
 						// We need to send either audio or video
 						var haveAudioDevice = audioSend ? audioExist : false;
 						var haveVideoDevice = videoSend ? videoExist : false;
@@ -1594,6 +1639,14 @@ function Janus(gatewayCallbacks) {
 							// FIXME Should we really give up, or just assume recvonly for both?
 							pluginHandle.consentDialog(false);
 							callbacks.error('No capture device found');
+							return false;
+						} else if(!haveAudioDevice && needAudioDevice) {
+							pluginHandle.consentDialog(false);
+							callbacks.error('Audio capture is required, but no capture device found');
+							return false;
+						} else if(!haveVideoDevice && needVideoDevice) {
+							pluginHandle.consentDialog(false);
+							callbacks.error('Video capture is required, but no capture device found');
 							return false;
 						}
 					}
@@ -2111,6 +2164,17 @@ function Janus(gatewayCallbacks) {
 		return (media.audioSend === true);
 	}
 
+	function isAudioSendRequired(media) {
+		Janus.debug("isAudioSendRequired:", media);
+		if(media === undefined || media === null)
+			return false;	// Default
+		if(media.audio === false || media.audioSend === false)
+			return false;	// If we're not asking to capture audio, it's not required
+		if(media.failIfNoAudio === undefined || media.failIfNoAudio === null)
+			return false;	// Default
+		return (media.failIfNoAudio === true);
+	}
+
 	function isAudioRecvEnabled(media) {
 		Janus.debug("isAudioRecvEnabled:", media);
 		if(media === undefined || media === null)
@@ -2131,6 +2195,17 @@ function Janus(gatewayCallbacks) {
 		if(media.videoSend === undefined || media.videoSend === null)
 			return true;	// Default
 		return (media.videoSend === true);
+	}
+
+	function isVideoSendRequired(media) {
+		Janus.debug("isVideoSendRequired:", media);
+		if(media === undefined || media === null)
+			return false;	// Default
+		if(media.video === false || media.videoSend === false)
+			return false;	// If we're not asking to capture video, it's not required
+		if(media.failIfNoVideo === undefined || media.failIfNoVideo === null)
+			return false;	// Default
+		return (media.failIfNoVideo === true);
 	}
 
 	function isVideoRecvEnabled(media) {

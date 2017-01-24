@@ -1744,6 +1744,8 @@ int janus_http_notifier(janus_http_msg *msg, int max_events) {
 		g_usleep(100000);
 		end = janus_get_monotonic_time();
 	}
+	if((max_events == 1 && event == NULL) || (max_events > 1 && list == NULL))
+		found = FALSE;
 	if(!found) {
 		JANUS_LOG(LOG_VERB, "Long poll time out for session %"SCNu64"...\n", session_id);
 		/* Turn this into a "keepalive" response */
@@ -1763,7 +1765,7 @@ int janus_http_notifier(janus_http_msg *msg, int max_events) {
 	char *payload_text = json_dumps(max_events == 1 ? event : list, json_format);
 	json_decref(max_events == 1 ? event : list);
 	/* Finish the request by sending the response */
-	JANUS_LOG(LOG_VERB, "We have a message to serve...\n\t%s\n", payload_text);
+	JANUS_LOG(LOG_HUGE, "We have a message to serve...\n\t%s\n", payload_text);
 	/* Send event */
 	ret = janus_http_return_success(msg, payload_text);
 	return ret;
@@ -1772,7 +1774,8 @@ int janus_http_notifier(janus_http_msg *msg, int max_events) {
 /* Helper to quickly send a success response */
 int janus_http_return_success(janus_http_msg *msg, char *payload) {
 	if(!msg || !msg->connection) {
-		g_free(payload);
+		if(payload)
+			free(payload);
 		return MHD_NO;
 	}
 	struct MHD_Response *response = MHD_create_response_from_buffer(

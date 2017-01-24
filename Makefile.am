@@ -98,6 +98,7 @@ janus_SOURCES = \
 	record.h \
 	rtcp.c \
 	rtcp.h \
+	rtp.c \
 	rtp.h \
 	sctp.c \
 	sctp.h \
