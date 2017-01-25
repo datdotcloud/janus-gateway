@@ -32,9 +32,6 @@
 #include "rtcp.h"
 #include "apierror.h"
 
-gint64 profile_us_start, profile_us_stop, profile_us_delta, profile_us_total = 0, profile_us_samples = 0;
-gint64 profile_timer_start;
-
 /* STUN server/port, if any */
 static char *janus_stun_server = NULL;
 static uint16_t janus_stun_port = 0;
@@ -3112,23 +3109,7 @@ void *janus_ice_send_thread(void *data) {
 		video_rtcp_last_rr = before, video_rtcp_last_sr = before,
 		last_nack_cleanup = before;
 
-  if (profile_us_samples == 0)
-  {
-    profile_timer_start = janus_get_monotonic_time();
-  }
-
 	while(!janus_flags_is_set(&handle->webrtc_flags, JANUS_ICE_HANDLE_WEBRTC_ALERT)) {
-
-    if ((janus_get_monotonic_time() - profile_timer_start) >= (G_USEC_PER_SEC * 5)){
-      gint64 avg_us_per_loop;
-
-      JANUS_LOG(LOG_INFO, "sendice thread profile:  %" G_GINT64_FORMAT " us total, avg per call: %" G_GINT64_FORMAT " us, total calls: %" G_GINT64_FORMAT "\n",
-                profile_us_total, profile_us_total / profile_us_samples, profile_us_samples);
-      profile_us_total = 0;
-      profile_us_samples = 0;
-      profile_timer_start = janus_get_monotonic_time();
-    }
-
 		if(handle->queued_packets != NULL) {
 			pkt = g_async_queue_timeout_pop(handle->queued_packets, 500000);
 		} else {
@@ -3511,12 +3492,7 @@ void *janus_ice_send_thread(void *data) {
 						header->ssrc = htonl(video ? stream->video_ssrc : stream->audio_ssrc);
 					}
 					int protected = pkt->length;
-			          profile_us_start = janus_get_real_time();
-			          int res = srtp_protect(component->dtls->srtp_out, sbuf, &protected);
-			          profile_us_stop = janus_get_real_time();
-			          profile_us_delta = profile_us_stop - profile_us_start;
-			          profile_us_total += profile_us_delta;
-			          profile_us_samples++;
+          int res = srtp_protect(component->dtls->srtp_out, sbuf, &protected);
 					//~ JANUS_LOG(LOG_VERB, "[%"SCNu64"] ... SRTP protect %s (len=%d-->%d)...\n", handle->handle_id, janus_get_srtp_error(res), pkt->length, protected);
 					if(res != srtp_err_status_ok) {
 						rtp_header *header = (rtp_header *)sbuf;
