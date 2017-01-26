@@ -3126,9 +3126,9 @@ void *janus_ice_send_thread(void *data) {
 		} else {
 			g_usleep(100000);
 		}
-		if(pkt->JANUS_ICE_PACKET_VIDEO){
+		if(pkt->type == JANUS_ICE_PACKET_VIDEO){
 			handle->video_pkts_queued--;
-		}else if(pkt->JANUS_ICE_PACKET_AUDIO){
+		}else if(pkt->type == JANUS_ICE_PACKET_AUDIO){
 			handle->audio_pkts_queued--;
 		}
 		/* First of all, let's see if everything's fine on the recv side */
