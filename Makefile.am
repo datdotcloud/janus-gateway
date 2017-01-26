@@ -18,8 +18,6 @@ AM_CFLAGS += -Wno-override-init  # we need this for JANUS_PLUGIN_INIT and JANUS_
 # AM_CFLAGS += -Wshadow -Wstrict-aliasing=2
 
 AM_CFLAGS += -fstack-protector-all -g -ggdb -fPIC -rdynamic -pthread
-AM_CFLAGS += $(MYSQL_CFLAGS)
-AM_LDFLAGS = $(MYSQL_LDFLAGS)
 
 # FIXME: make docs work with distcheck
 DISTCHECK_CONFIGURE_FLAGS = --disable-docs --enable-post-processing
@@ -293,8 +291,8 @@ plugins_libimpstar_la_SOURCES = plugins/impstar/impstar.c \
          plugins/impstar/helpers.c \
 	 plugins/impstar/sdp.c \
          plugins/impstar/ingest.c
-plugins_libimpstar_la_CFLAGS = $(plugins_cflags) -I.. $(MYSQL_CFLAGS)
-plugins_libimpstar_la_LDFLAGS = $(plugins_ldflags) $(MYSQL_LDFLAGS)
+plugins_libimpstar_la_CFLAGS = $(plugins_cflags)
+plugins_libimpstar_la_LDFLAGS = $(plugins_ldflags)
 plugins_libimpstar_la_LIBADD = $(plugins_libadd)
 endif
 
