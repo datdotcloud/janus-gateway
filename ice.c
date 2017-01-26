@@ -3692,12 +3692,14 @@ void janus_ice_relay_rtp(janus_ice_handle *handle, int video, char *buf, int len
     return;
   }
 
+/* //still not working right, need to debug further
   gint queue_ms;
   if ((queue_ms = janus_pkt_queue_depth_ms(handle, video)) > max_pkt_queue_in_ms)
   {
     JANUS_LOG(LOG_INFO, "[%" SCNu64 "] %s pkt queue has %d ms in it, discarding packet\n", handle->handle_id, video ? "video" : "audio", queue_ms);
     return;
   }
+*/
 
 	/* Queue this packet */
 	janus_ice_queued_packet *pkt = (janus_ice_queued_packet *)g_malloc0(sizeof(janus_ice_queued_packet));
