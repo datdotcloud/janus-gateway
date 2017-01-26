@@ -1272,7 +1272,9 @@ void janus_ice_stream_free(GHashTable *streams, janus_ice_stream *stream) {
 	g_free(stream->video_rtcp_ctx);
 	stream->video_rtcp_ctx = NULL;
 	stream->audio_last_ts = 0;
+	stream->audio_last_sent_insert_time = 0;
 	stream->video_last_ts = 0;
+	stream->video_last_sent_insert_time = 0;
 	g_free(stream);
 	stream = NULL;
 }
@@ -3633,6 +3635,11 @@ static gint janus_pkt_queue_depth_ms(janus_ice_handle *handle, gboolean video)
   gint64 last_sent_ts;
   gint64 delta_ts;
   gint delta_ms;
+
+	//if the queue is empty then there is 0ms in it
+	if(g_async_queue_length(handle->queued_packets) == 0){
+		return 0;
+	}
 
   janus_ice_stream *stream = janus_flags_is_set(&handle->webrtc_flags, JANUS_ICE_HANDLE_WEBRTC_BUNDLE) ? (handle->audio_stream ? handle->audio_stream : handle->video_stream) : (video ? handle->video_stream : handle->audio_stream);
   janus_ice_component *component;
