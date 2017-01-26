@@ -351,11 +351,11 @@ struct janus_ice_stream
   /*! \brief Last sent audio RTP timestamp */
   guint32 audio_last_ts;
   /*! \brief The insert time of the packet last sent to the peer */
-	gint64 audio_last_sent_insert_time
+	gint64 audio_last_sent_insert_time;
   /*! \brief Last sent video RTP timestamp */
   guint32 video_last_ts;
   /*! \brief The insert time of the packet last sent to the peer */
-	gint64 video_last_sent_insert_time
+	gint64 video_last_sent_insert_time;
   /*! \brief DTLS role of the gateway for this stream */
   janus_dtls_role dtls_role;
   /*! \brief Hashing algorhitm used by the peer for the DTLS certificate (e.g., "SHA-256") */
