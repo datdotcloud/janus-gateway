@@ -3126,11 +3126,6 @@ void *janus_ice_send_thread(void *data) {
 		} else {
 			g_usleep(100000);
 		}
-		if(pkt->type == JANUS_ICE_PACKET_VIDEO){
-			handle->video_pkts_queued--;
-		}else if(pkt->type == JANUS_ICE_PACKET_AUDIO){
-			handle->audio_pkts_queued--;
-		}
 		/* First of all, let's see if everything's fine on the recv side */
 		gint64 now = janus_get_monotonic_time();
 		if(now-before >= G_USEC_PER_SEC) {
@@ -3448,6 +3443,11 @@ void *janus_ice_send_thread(void *data) {
 		} else {
 			/* RTP or data */
 			if(pkt->type == JANUS_ICE_PACKET_AUDIO || pkt->type == JANUS_ICE_PACKET_VIDEO) {
+				if(pkt->type == JANUS_ICE_PACKET_VIDEO){
+					handle->video_pkts_queued--;
+				}else if(pkt->type == JANUS_ICE_PACKET_AUDIO){
+					handle->audio_pkts_queued--;
+				}
 				/* RTP */
 				int video = (pkt->type == JANUS_ICE_PACKET_VIDEO);
 				janus_ice_stream *stream = janus_flags_is_set(&handle->webrtc_flags, JANUS_ICE_HANDLE_WEBRTC_BUNDLE) ? (handle->audio_stream ? handle->audio_stream : handle->video_stream) : (video ? handle->video_stream : handle->audio_stream);
