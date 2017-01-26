@@ -2124,6 +2124,11 @@ void janus_ice_cb_nice_recv(NiceAgent *agent, guint stream_id, guint component_i
 									pkt->encrypted = TRUE;	/* This was already encrypted before */
 									pkt->is_retransmit = TRUE;
 									pkt->insert_time = janus_get_monotonic_time();
+									if(video){
+										handle->video_pkts_queued++;
+									}else{
+										handle->audio_pkts_queued++;
+									}
 									if(handle->queued_packets != NULL)
 										g_async_queue_push(handle->queued_packets, pkt);
 									break;
@@ -3121,6 +3126,11 @@ void *janus_ice_send_thread(void *data) {
 		} else {
 			g_usleep(100000);
 		}
+		if(pkt->JANUS_ICE_PACKET_VIDEO){
+			handle->video_pkts_queued--;
+		}else if(pkt->JANUS_ICE_PACKET_AUDIO){
+			handle->audio_pkts_queued--;
+		}
 		/* First of all, let's see if everything's fine on the recv side */
 		gint64 now = janus_get_monotonic_time();
 		if(now-before >= G_USEC_PER_SEC) {
@@ -3636,11 +3646,6 @@ static gint janus_pkt_queue_depth_ms(janus_ice_handle *handle, gboolean video)
   gint64 delta_ts;
   gint delta_ms;
 
-	//if the queue is empty then there is 0ms in it
-	if(g_async_queue_length(handle->queued_packets) == 0){
-		return 0;
-	}
-
   janus_ice_stream *stream = janus_flags_is_set(&handle->webrtc_flags, JANUS_ICE_HANDLE_WEBRTC_BUNDLE) ? (handle->audio_stream ? handle->audio_stream : handle->video_stream) : (video ? handle->video_stream : handle->audio_stream);
   janus_ice_component *component;
 
@@ -3651,33 +3656,17 @@ static gint janus_pkt_queue_depth_ms(janus_ice_handle *handle, gboolean video)
 
   if (video)
   {
-    if (stream->video_rtcp_ctx == NULL || stream->rtp_component == NULL)
-    {
-      return 0;
-    }
-
-    component = stream->rtp_component;
-
-    if (component->out_stats.video_packets <= 0)
-    {
-      return 0;
-    }
+		if(handle->video_pkts_queued <= 0){
+			return 0;
+		}
 
     last_sent_ts = stream->video_last_sent_insert_time;
   }
   else
   {
-    if (stream->audio_rtcp_ctx == NULL || stream->rtp_component == NULL)
-    {
-      return 0;
-    }
-
-    component = stream->rtp_component;
-
-    if (component->out_stats.audio_packets <= 0)
-    {
-      return 0;
-    }
+		if(handle->video_pkts_queued <= 0){
+			return 0;
+		}
 
     last_sent_ts = stream->audio_last_sent_insert_time;
   }
@@ -3720,6 +3709,11 @@ void janus_ice_relay_rtp(janus_ice_handle *handle, int video, char *buf, int len
 	pkt->encrypted = FALSE;
 	pkt->is_retransmit = FALSE;
 	pkt->insert_time = janus_get_monotonic_time();
+	if(video){
+		handle->video_pkts_queued++;
+	}else{
+		handle->audio_pkts_queued++;
+	}
 	if(handle->queued_packets != NULL)
 		g_async_queue_push(handle->queued_packets, pkt);
 }

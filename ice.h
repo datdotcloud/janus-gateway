@@ -309,6 +309,10 @@ struct janus_ice_handle
   GList *pending_trickles;
   /*! \brief Queue of outgoing packets to send */
   GAsyncQueue *queued_packets;
+	/*! \brief The number of video packets currently in the queue */
+	gint audio_pkts_queued;
+	/*! \brief The number of video packets currently in the queue */
+	gint video_pkts_queued;
   /*! \brief GLib thread for sending outgoing packets */
   GThread *send_thread;
   /*! \brief Atomic flag to make sure we only create the thread once */
