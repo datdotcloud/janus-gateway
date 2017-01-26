@@ -8,12 +8,12 @@
  * on. Incoming RTP and RTCP packets from peers are relayed to the associated
  * plugins by means of the incoming_rtp and incoming_rtcp callbacks. Packets
  * to be sent to peers are relayed by peers invoking the relay_rtp and
- * relay_rtcp gateway callbacks instead. 
- * 
+ * relay_rtcp gateway callbacks instead.
+ *
  * \ingroup protocols
  * \ref protocols
  */
- 
+
 #include <ifaddrs.h>
 #include <net/if.h>
 #include <sys/socket.h>
@@ -275,6 +275,8 @@ typedef struct janus_ice_queued_packet {
 	gint type;
 	gboolean control;
 	gboolean encrypted;
+	gboolean is_retransmit;
+	gint64 insert_time;
 } janus_ice_queued_packet;
 /* This is a static, fake, message we use as a trigger to send a DTLS alert */
 static janus_ice_queued_packet janus_ice_dtls_alert;
@@ -642,7 +644,7 @@ void janus_ice_init(gboolean ice_lite, gboolean ice_tcp, gboolean ipv6, uint16_t
 
 	/*! \note The RTP/RTCP port range configuration may be just a placeholder: for
 	 * instance, libnice supports this since 0.1.0, but the 0.1.3 on Fedora fails
-	 * when linking with an undefined reference to \c nice_agent_set_port_range 
+	 * when linking with an undefined reference to \c nice_agent_set_port_range
 	 * so this is checked by the install.sh script in advance. */
 	rtp_range_min = rtp_min_port;
 	rtp_range_max = rtp_max_port;
@@ -666,7 +668,7 @@ void janus_ice_init(gboolean ice_lite, gboolean ice_tcp, gboolean ipv6, uint16_t
   {
     max_pkt_queue_in_ms = max_pkt_queue_depth_ms;
   }
-  JANUS_LOG(LOG_INFO, "ICE maximum packet queue size in ms: %d\n", max_pkt_queue_in_ms);  
+  JANUS_LOG(LOG_INFO, "ICE maximum packet queue size in ms: %d\n", max_pkt_queue_in_ms);
 
 	/* We keep track of old plugin sessions to avoid problems */
 	old_plugin_sessions = g_hash_table_new(NULL, NULL);
@@ -683,7 +685,7 @@ void janus_ice_init(gboolean ice_lite, gboolean ice_tcp, gboolean ipv6, uint16_t
 		JANUS_LOG(LOG_FATAL, "Got error %d (%s) trying to start handles watchdog...\n", error->code, error->message ? error->message : "??");
 		exit(1);
 	}
-	
+
 #ifdef HAVE_LIBCURL
 	/* Initialize the TURN REST API client stack, whether we're going to use it or not */
 	janus_turnrest_init();
@@ -862,7 +864,7 @@ int janus_ice_set_turn_server(gchar *turn_server, uint16_t turn_port, gchar *tur
 int janus_ice_set_turn_rest_api(gchar *api_server, gchar *api_key, gchar *api_method) {
 #ifndef HAVE_LIBCURL
 	JANUS_LOG(LOG_ERR, "Janus has been nuilt with no libcurl support, TURN REST API unavailable\n");
-	return -1; 
+	return -1;
 #else
 	if(api_server != NULL &&
 			(strstr(api_server, "http://") != api_server && strstr(api_server, "https://") != api_server)) {
@@ -877,7 +879,7 @@ int janus_ice_set_turn_rest_api(gchar *api_server, gchar *api_key, gchar *api_me
 
 
 /* ICE stuff */
-static const gchar *janus_ice_state_name[] = 
+static const gchar *janus_ice_state_name[] =
 {
 	"disconnected",
 	"gathering",
@@ -1540,7 +1542,7 @@ void janus_ice_cb_new_selected_pair (NiceAgent *agent, guint stream_id, guint co
 	nice_address_to_string(&(remote->addr), (gchar *)&raddress);
 	lport = nice_address_get_port(&(local->addr));
 	rport = nice_address_get_port(&(remote->addr));
-	const char *ltype = NULL, *rtype = NULL; 
+	const char *ltype = NULL, *rtype = NULL;
 	switch(local->type) {
 		case NICE_CANDIDATE_TYPE_HOST:
 			ltype = "host";
@@ -1688,7 +1690,7 @@ void janus_ice_cb_new_remote_candidate (NiceAgent *agent, NiceCandidate *candida
 	char buffer[100];
 	if(candidate->transport == NICE_CANDIDATE_TRANSPORT_UDP) {
 		g_snprintf(buffer, 100,
-			"%s %d %s %d %s %d typ prflx raddr %s rport %d\r\n", 
+			"%s %d %s %d %s %d typ prflx raddr %s rport %d\r\n",
 				candidate->foundation,
 				candidate->component_id,
 				"udp",
@@ -2118,6 +2120,8 @@ void janus_ice_cb_nice_recv(NiceAgent *agent, guint stream_id, guint component_i
 									pkt->type = video ? JANUS_ICE_PACKET_VIDEO : JANUS_ICE_PACKET_AUDIO;
 									pkt->control = FALSE;
 									pkt->encrypted = TRUE;	/* This was already encrypted before */
+									pkt->is_retransmit = TRUE;
+									pkt->insert_time = janus_get_monotonic_time();
 									if(handle->queued_packets != NULL)
 										g_async_queue_push(handle->queued_packets, pkt);
 									break;
@@ -2467,7 +2471,7 @@ void janus_ice_setup_remote_candidates(janus_ice_handle *handle, guint stream_id
 	}
 	if(!component->candidates || !component->candidates->data) {
 		if(!janus_flags_is_set(&handle->webrtc_flags, JANUS_ICE_HANDLE_WEBRTC_TRICKLE)
-				|| janus_flags_is_set(&handle->webrtc_flags, JANUS_ICE_HANDLE_WEBRTC_ALL_TRICKLES)) { 
+				|| janus_flags_is_set(&handle->webrtc_flags, JANUS_ICE_HANDLE_WEBRTC_ALL_TRICKLES)) {
 			JANUS_LOG(LOG_ERR, "[%"SCNu64"] No remote candidates for component %d in stream %d: was the remote SDP parsed?\n", handle->handle_id, component_id, stream_id);
 		}
 		return;
@@ -3517,6 +3521,7 @@ void *janus_ice_send_thread(void *data) {
 								component->out_stats.audio_packets++;
 								component->out_stats.audio_bytes += sent;
 								stream->audio_last_ts = timestamp;
+								stream->audio_last_sent_insert_time = pkt->insert_time;
 								/* Let's check if this was G.711: in case we may need to change the timestamp base */
 								rtcp_context *rtcp_ctx = video ? stream->video_rtcp_ctx : stream->audio_rtcp_ctx;
 								int pt = header->type;
@@ -3526,6 +3531,7 @@ void *janus_ice_send_thread(void *data) {
 								component->out_stats.video_packets++;
 								component->out_stats.video_bytes += sent;
 								stream->video_last_ts = timestamp;
+								stream->video_last_sent_insert_time = pkt->insert_time;
 							}
 						}
 						if(max_nack_queue > 0) {
@@ -3622,12 +3628,10 @@ static guint32 janus_rtp_ts_delta(guint32 start, guint32 end)
   return delta;
 }
 
-static gint janus_pkt_queue_depth_ms(janus_ice_handle *handle, gboolean video, rtp_header *header)
+static gint janus_pkt_queue_depth_ms(janus_ice_handle *handle, gboolean video)
 {
-  guint32 newest_ts = ntohl(header->timestamp);
-  guint32 last_sent_ts;
-  guint32 delta_ts;
-  guint32 ts_base_freq;
+  gint64 last_sent_ts;
+  gint64 delta_ts;
   gint delta_ms;
 
   janus_ice_stream *stream = janus_flags_is_set(&handle->webrtc_flags, JANUS_ICE_HANDLE_WEBRTC_BUNDLE) ? (handle->audio_stream ? handle->audio_stream : handle->video_stream) : (video ? handle->video_stream : handle->audio_stream);
@@ -3652,8 +3656,7 @@ static gint janus_pkt_queue_depth_ms(janus_ice_handle *handle, gboolean video, r
       return 0;
     }
 
-    last_sent_ts = stream->video_last_ts;
-    ts_base_freq = stream->video_rtcp_ctx->tb;
+    last_sent_ts = stream->video_last_sent_insert_time;
   }
   else
   {
@@ -3669,13 +3672,12 @@ static gint janus_pkt_queue_depth_ms(janus_ice_handle *handle, gboolean video, r
       return 0;
     }
 
-    last_sent_ts = stream->audio_last_ts;
-    ts_base_freq = stream->audio_rtcp_ctx->tb;
+    last_sent_ts = stream->audio_last_sent_insert_time;
   }
 
-  delta_ts = janus_rtp_ts_delta(last_sent_ts, newest_ts);
+  delta_ts = janus_get_monotonic_time() - last_sent_ts;
 
-  delta_ms = (gint)((guint64)delta_ts * (guint64)1000 / (guint64)ts_base_freq);
+  delta_ms = (gint)(delta_ts * (guint64)1000 / (guint64)G_USEC_PER_SEC);
 
   return delta_ms;
 }
@@ -3694,16 +3696,12 @@ void janus_ice_relay_rtp(janus_ice_handle *handle, int video, char *buf, int len
     return;
   }
 
-  //TODO:  this wont work correctly until there is a jitter buffer
-  //how full is the queued in msg_type
-  /*  
   gint queue_ms;
-  if ((queue_ms = janus_pkt_queue_depth_ms(handle, video, (rtp_header *)buf)) > max_pkt_queue_in_ms)
+  if ((queue_ms = janus_pkt_queue_depth_ms(handle, video)) > max_pkt_queue_in_ms)
   {
     JANUS_LOG(LOG_INFO, "[%" SCNu64 "] %s pkt queue has %d ms in it, discarding packet\n", handle->handle_id, video ? "video" : "audio", queue_ms);
     return;
   }
-*/
 
 	/* Queue this packet */
 	janus_ice_queued_packet *pkt = (janus_ice_queued_packet *)g_malloc0(sizeof(janus_ice_queued_packet));
@@ -3713,6 +3711,8 @@ void janus_ice_relay_rtp(janus_ice_handle *handle, int video, char *buf, int len
 	pkt->type = video ? JANUS_ICE_PACKET_VIDEO : JANUS_ICE_PACKET_AUDIO;
 	pkt->control = FALSE;
 	pkt->encrypted = FALSE;
+	pkt->is_retransmit = FALSE;
+	pkt->insert_time = janus_get_monotonic_time();
 	if(handle->queued_packets != NULL)
 		g_async_queue_push(handle->queued_packets, pkt);
 }
@@ -3741,6 +3741,8 @@ void janus_ice_relay_rtcp_internal(janus_ice_handle *handle, int video, char *bu
 	pkt->type = video ? JANUS_ICE_PACKET_VIDEO : JANUS_ICE_PACKET_AUDIO;
 	pkt->control = TRUE;
 	pkt->encrypted = FALSE;
+	pkt->is_retransmit = FALSE;
+	pkt->insert_time = janus_get_monotonic_time();
 	if(handle->queued_packets != NULL)
 		g_async_queue_push(handle->queued_packets, pkt);
 	if(rtcp_buf != buf) {
@@ -3765,6 +3767,8 @@ void janus_ice_relay_data(janus_ice_handle *handle, char *buf, int len) {
 	pkt->type = JANUS_ICE_PACKET_DATA;
 	pkt->control = FALSE;
 	pkt->encrypted = FALSE;
+	pkt->is_retransmit = FALSE;
+	pkt->insert_time = janus_get_monotonic_time();
 	if(handle->queued_packets != NULL)
 		g_async_queue_push(handle->queued_packets, pkt);
 }

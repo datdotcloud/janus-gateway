@@ -8,8 +8,8 @@
  * on. Incoming RTP and RTCP packets from peers are relayed to the associated
  * plugins by means of the incoming_rtp and incoming_rtcp callbacks. Packets
  * to be sent to peers are relayed by peers invoking the relay_rtp and
- * relay_rtcp gateway callbacks instead. 
- * 
+ * relay_rtcp gateway callbacks instead.
+ *
  * \ingroup protocols
  * \ref protocols
  */
@@ -350,8 +350,12 @@ struct janus_ice_stream
   rtcp_context *video_rtcp_ctx;
   /*! \brief Last sent audio RTP timestamp */
   guint32 audio_last_ts;
+  /*! \brief The insert time of the packet last sent to the peer */
+	gint64 audio_last_sent_insert_time
   /*! \brief Last sent video RTP timestamp */
   guint32 video_last_ts;
+  /*! \brief The insert time of the packet last sent to the peer */
+	gint64 video_last_sent_insert_time
   /*! \brief DTLS role of the gateway for this stream */
   janus_dtls_role dtls_role;
   /*! \brief Hashing algorhitm used by the peer for the DTLS certificate (e.g., "SHA-256") */
