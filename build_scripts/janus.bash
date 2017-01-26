@@ -1,5 +1,5 @@
 #yum -y install libnice-janus libsrtp-janus libwebsockets-janus mysql mysql-devel mysql-lib glib2-devel
-export PKG_CONFIG_PATH=/opt/janus/lib/pkgconfig/
+#export PKG_CONFIG_PATH=/opt/janus/lib/pkgconfig/
 #git clone --recursive https://github.com/WatchBeam/janus-gateway.git
 cd ..
 #git submodule update --init
@@ -7,7 +7,7 @@ cd ..
 sh autogen.sh
 PLUGIN_OPTS="--disable-plugin-textroom --disable-plugin-audiobridge --disable-plugin-echotest --disable-plugin-recordplay --disable-plugin-sip \
 	--disable-plugin-streaming --disable-plugin-videocall --disable-plugin-videoroom --disable-plugin-voicemail"
-GENERAL_OPTS="--disable-data-channels --disable-docs --disable-rabbitmq --disable-unix-sockets --disable-mqtt --enable-libsrtp2 --enable-boringssl"
+GENERAL_OPTS="--disable-data-channels --disable-docs --disable-rabbitmq --disable-unix-sockets --disable-mqtt --enable-libsrtp2 --enable-boringssl --enable-dtls-settimeout"
 ./configure --prefix=/opt/janus $PLUGIN_OPTS $GENERAL_OPTS
 #./configure --prefix=/opt/janus $PLUGIN_OPTS $GENERAL_OPTS LDFLAGS="-L/lib64 -Wl,-rpath=/lib64" CFLAGS="-I/usr/include"
 make clean
