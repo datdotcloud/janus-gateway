@@ -3215,11 +3215,12 @@ void *janus_ice_send_thread(void *data) {
 				sr->header.length = htons((srlen/4)-1);
 				struct timeval tv;
 				gettimeofday(&tv, NULL);
-				uint32_t s = tv.tv_sec + 2208988800u;
-				uint32_t u = tv.tv_usec;
-				uint32_t f = (u << 12) + (u << 8) - ((u * 3650) >> 6);
+				uint32_t s = tv.tv_sec + 2208988800UL;
+				double u = (tv.tv_usec * 1e-6) * 4294967295.0;
+				//uint32_t u = tv.tv_usec;
+				//uint32_t f = (u << 12) + (u << 8) - ((u * 3650) >> 6);
 				sr->si.ntp_ts_msw = htonl(s);
-				sr->si.ntp_ts_lsw = htonl(f);
+				sr->si.ntp_ts_lsw = htonl((uint32_t)u);
 				/* Compute an RTP timestamp coherent with the NTP one */
 				rtcp_context *rtcp_ctx = stream->audio_rtcp_ctx;
 				if(rtcp_ctx == NULL) {
@@ -3254,11 +3255,12 @@ void *janus_ice_send_thread(void *data) {
 				sr->header.length = htons((srlen/4)-1);
 				struct timeval tv;
 				gettimeofday(&tv, NULL);
-				uint32_t s = tv.tv_sec + 2208988800u;
-				uint32_t u = tv.tv_usec;
-				uint32_t f = (u << 12) + (u << 8) - ((u * 3650) >> 6);
+				uint32_t s = tv.tv_sec + 2208988800UL;
+				double u = (tv.tv_usec * 1e-6) * 4294967295.0;
+				//uint32_t u = tv.tv_usec;
+				//uint32_t f = (u << 12) + (u << 8) - ((u * 3650) >> 6);
 				sr->si.ntp_ts_msw = htonl(s);
-				sr->si.ntp_ts_lsw = htonl(f);
+				sr->si.ntp_ts_lsw = htonl((uint32_t)u);
 				/* Compute an RTP timestamp coherent with the NTP one */
 				rtcp_context *rtcp_ctx = stream->video_rtcp_ctx;
 				if(rtcp_ctx == NULL) {
