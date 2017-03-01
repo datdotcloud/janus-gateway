@@ -3222,6 +3222,7 @@ void *janus_ice_send_thread(void *data) {
 				sr->si.ntp_ts_msw = htonl(s);
 				sr->si.ntp_ts_lsw = htonl((uint32_t)u);
 				/* Compute an RTP timestamp coherent with the NTP one */
+				JANUS_LOG(LOG_INFO, "tv_sec: %ul, tv_usec: %ul, ntp_msw: %ul, ntp_lsw: %ul\n", tv.tv_sec, tv.tv_usec, s, (uint32_t)u);
 				rtcp_context *rtcp_ctx = stream->audio_rtcp_ctx;
 				if(rtcp_ctx == NULL) {
 					sr->si.rtp_ts = htonl(stream->audio_last_ts);	/* FIXME */
@@ -3261,6 +3262,7 @@ void *janus_ice_send_thread(void *data) {
 				//uint32_t f = (u << 12) + (u << 8) - ((u * 3650) >> 6);
 				sr->si.ntp_ts_msw = htonl(s);
 				sr->si.ntp_ts_lsw = htonl((uint32_t)u);
+				JANUS_LOG(LOG_INFO, "tv_sec: %ul, tv_usec: %ul, ntp_msw: %ul, ntp_lsw: %ul\n", tv.tv_sec, tv.tv_usec, s, (uint32_t)u);
 				/* Compute an RTP timestamp coherent with the NTP one */
 				rtcp_context *rtcp_ctx = stream->video_rtcp_ctx;
 				if(rtcp_ctx == NULL) {
