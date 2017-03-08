@@ -397,7 +397,7 @@ char *janus_rtcp_filter(char *packet, int len, int *newlen) {
 			break;
 		bytes = length*4+4;
 		switch(rtcp->type) {
-			case RTCP_SR:
+			//case RTCP_SR:
 			case RTCP_RR:
 			case RTCP_SDES:
 				/* These are packets we generate ourselves, so remove them */
