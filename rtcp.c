@@ -403,6 +403,7 @@ char *janus_rtcp_filter(char *packet, int len, int *newlen) {
 				/* These are packets we generate ourselves, so remove them */
 				keep = FALSE;
 				break;
+      case RTCP_SR:
 			case RTCP_BYE:
 			case RTCP_APP:
 			case RTCP_FIR:
