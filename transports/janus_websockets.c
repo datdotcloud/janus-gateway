@@ -463,7 +463,7 @@ int janus_websockets_init(janus_transport_callbacks *callback, const char *confi
 			info.gid = -1;
 			info.uid = -1;
 			info.options = 0;
-			info.max_http_header_data = 2048;
+			info.max_http_header_data = 4096;
 			/* Create the WebSocket context */
 #ifdef HAVE_LIBWEBSOCKETS_NEWAPI
 			wss = lws_create_context(&info);
