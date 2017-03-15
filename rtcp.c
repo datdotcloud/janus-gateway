@@ -8,11 +8,11 @@
  * fixed before they are sent to the peers (e.g., to fix SSRCs that may
  * have been changed by the gateway). Methods to generate FIR messages
  * and generate/cap REMB messages are provided as well.
- * 
+ *
  * \ingroup protocols
  * \ref protocols
  */
- 
+
 #include <math.h>
 #include <stdlib.h>
 

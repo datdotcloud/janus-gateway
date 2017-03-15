@@ -3200,6 +3200,7 @@ void *janus_ice_send_thread(void *data) {
 			}
 			video_rtcp_last_rr = now;
 		}
+#if 0
 		/* Do the same with SR/SDES */
 		if(now-audio_rtcp_last_sr >= 500000) {
 			janus_ice_stream *stream = handle->audio_stream;
@@ -3279,6 +3280,7 @@ void *janus_ice_send_thread(void *data) {
 			}
 			video_rtcp_last_sr = now;
 		}
+#endif
 		/* Should we clean up old NACK buffers? (we check each 1/4 of the max_nack_queue time) */
 		if(max_nack_queue > 0 && (now-last_nack_cleanup >= (max_nack_queue*250))) {
 			/* Check if we do for both streams */
@@ -3755,7 +3757,7 @@ void janus_ice_relay_rtcp_internal(janus_ice_handle *handle, int video, char *bu
 }
 
 void janus_ice_relay_rtcp(janus_ice_handle *handle, int video, char *buf, int len) {
-	janus_ice_relay_rtcp_internal(handle, video, buf, len, TRUE);
+	janus_ice_relay_rtcp_internal(handle, video, buf, len, FALSE);
 }
 
 #ifdef HAVE_SCTP
