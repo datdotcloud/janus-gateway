@@ -3200,6 +3200,7 @@ void *janus_ice_send_thread(void *data) {
 			}
 			video_rtcp_last_rr = now;
 		}
+#if 0
 		/* Do the same with SR/SDES */
 #if 0
 		if(now-audio_rtcp_last_sr >= 500000) {
