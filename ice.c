@@ -3695,11 +3695,12 @@ void janus_ice_relay_rtp(janus_ice_handle *handle, int video, char *buf, int len
   gint pkts_in_queue;
   if ((pkts_in_queue = g_async_queue_length(handle->queued_packets)) > max_size_pkt_queue)
   {
-    JANUS_LOG(LOG_INFO, "[%" SCNu64 "] pkt queue has %d packets in it, discarding packet\n", handle->handle_id, pkts_in_queue);
+    rtp_header *header = (rtp_header *)buf;
+    JANUS_LOG(LOG_INFO, "[%" SCNu64 "] pkt queue has %d packets in it, discarding packet (ssrc: 0x%08X, sn: %d)\n", handle->handle_id, pkts_in_queue, ntohl(header->timestamp), ntohs(header->seq_number));
     return;
   }
 
-/* //still not working right, need to debug further
+/* //this is not accurate without reordering
   gint queue_ms;
   if ((queue_ms = janus_pkt_queue_depth_ms(handle, video)) > max_pkt_queue_in_ms)
   {
