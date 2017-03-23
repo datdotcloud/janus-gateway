@@ -282,15 +282,16 @@ endif
 if ENABLE_PLUGIN_IMPSTAR
 plugin_LTLIBRARIES += plugins/libimpstar.la
 plugins_libimpstar_la_SOURCES = plugins/impstar/impstar.c \
-	 plugins/impstar/message.c \
-	 plugins/impstar/session.c \
-	 plugins/impstar/channel.c \
-         plugins/impstar/channel_helpers.c \
-	 plugins/impstar/stream.c \
-         plugins/impstar/helpers.c \
-	 plugins/impstar/sdp.c \
-         plugins/impstar/ingest.c \
-         plugins/impstar/ingest_msg.c
+  plugins/impstar/message.c \
+  plugins/impstar/session.c \
+  plugins/impstar/channel.c \
+  plugins/impstar/channel_helpers.c \
+  plugins/impstar/stream.c \
+  plugins/impstar/helpers.c \
+  plugins/impstar/sdp.c \
+  plugins/impstar/ingest.c \
+  plugins/impstar/ingest_msg.c \
+  plugins/impstar/monitor.c
 plugins_libimpstar_la_CFLAGS = $(plugins_cflags)
 plugins_libimpstar_la_LDFLAGS = $(plugins_ldflags)
 plugins_libimpstar_la_LIBADD = $(plugins_libadd)
