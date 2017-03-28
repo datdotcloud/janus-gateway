@@ -1,6 +1,6 @@
 properties([[$class: 'BuildDiscarderProperty', strategy: [$class: 'LogRotator', artifactNumToKeepStr: '2', numToKeepStr: '2']]])
 
-node ("master"){
+node("master") {
     def projectName = "janus-impstar"
 
     def projectDir = pwd()+ "/${projectName}"

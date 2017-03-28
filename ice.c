@@ -3200,8 +3200,9 @@ void *janus_ice_send_thread(void *data) {
 			}
 			video_rtcp_last_rr = now;
 		}
-#if 0
+
 		/* Do the same with SR/SDES */
+#if 0
 		if(now-audio_rtcp_last_sr >= 500000) {
 			janus_ice_stream *stream = handle->audio_stream;
 			if(stream && stream->rtp_component && stream->rtp_component->out_stats.audio_packets > 0) {
@@ -3216,12 +3217,14 @@ void *janus_ice_send_thread(void *data) {
 				sr->header.length = htons((srlen/4)-1);
 				struct timeval tv;
 				gettimeofday(&tv, NULL);
-				uint32_t s = tv.tv_sec + 2208988800u;
-				uint32_t u = tv.tv_usec;
-				uint32_t f = (u << 12) + (u << 8) - ((u * 3650) >> 6);
+				uint32_t s = tv.tv_sec + 2208988800UL;
+				double u = (tv.tv_usec * 1e-6) * 4294967295.0;
+				//uint32_t u = tv.tv_usec;
+				//uint32_t f = (u << 12) + (u << 8) - ((u * 3650) >> 6);
 				sr->si.ntp_ts_msw = htonl(s);
-				sr->si.ntp_ts_lsw = htonl(f);
+				sr->si.ntp_ts_lsw = htonl((uint32_t)u);
 				/* Compute an RTP timestamp coherent with the NTP one */
+				//JANUS_LOG(LOG_INFO, "tv_sec: %ul, tv_usec: %ul, ntp_msw: %ul, ntp_lsw: %ul\n", tv.tv_sec, tv.tv_usec, s, (uint32_t)u);
 				rtcp_context *rtcp_ctx = stream->audio_rtcp_ctx;
 				if(rtcp_ctx == NULL) {
 					sr->si.rtp_ts = htonl(stream->audio_last_ts);	/* FIXME */
@@ -3255,11 +3258,13 @@ void *janus_ice_send_thread(void *data) {
 				sr->header.length = htons((srlen/4)-1);
 				struct timeval tv;
 				gettimeofday(&tv, NULL);
-				uint32_t s = tv.tv_sec + 2208988800u;
-				uint32_t u = tv.tv_usec;
-				uint32_t f = (u << 12) + (u << 8) - ((u * 3650) >> 6);
+				uint32_t s = tv.tv_sec + 2208988800UL;
+				double u = (tv.tv_usec * 1e-6) * 4294967295.0;
+				//uint32_t u = tv.tv_usec;
+				//uint32_t f = (u << 12) + (u << 8) - ((u * 3650) >> 6);
 				sr->si.ntp_ts_msw = htonl(s);
-				sr->si.ntp_ts_lsw = htonl(f);
+				sr->si.ntp_ts_lsw = htonl((uint32_t)u);
+				//JANUS_LOG(LOG_INFO, "tv_sec: %ul, tv_usec: %ul, ntp_msw: %ul, ntp_lsw: %ul\n", tv.tv_sec, tv.tv_usec, s, (uint32_t)u);
 				/* Compute an RTP timestamp coherent with the NTP one */
 				rtcp_context *rtcp_ctx = stream->video_rtcp_ctx;
 				if(rtcp_ctx == NULL) {
@@ -3690,11 +3695,12 @@ void janus_ice_relay_rtp(janus_ice_handle *handle, int video, char *buf, int len
   gint pkts_in_queue;
   if ((pkts_in_queue = g_async_queue_length(handle->queued_packets)) > max_size_pkt_queue)
   {
-    JANUS_LOG(LOG_INFO, "[%" SCNu64 "] pkt queue has %d packets in it, discarding packet\n", handle->handle_id, pkts_in_queue);
+    rtp_header *header = (rtp_header *)buf;
+    JANUS_LOG(LOG_INFO, "[%" SCNu64 "] pkt queue has %d packets in it, discarding packet (ssrc: 0x%08X, sn: %d)\n", handle->handle_id, pkts_in_queue, ntohl(header->timestamp), ntohs(header->seq_number));
     return;
   }
 
-/* //still not working right, need to debug further
+/* //this is not accurate without reordering
   gint queue_ms;
   if ((queue_ms = janus_pkt_queue_depth_ms(handle, video)) > max_pkt_queue_in_ms)
   {
