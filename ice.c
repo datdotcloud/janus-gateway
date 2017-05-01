@@ -3522,7 +3522,7 @@ void *janus_ice_send_thread(void *data) {
 						guint32 ssrc = ntohl(header->ssrc);
 						guint32 timestamp = ntohl(header->timestamp);
 						guint16 seq = ntohs(header->seq_number);
-						JANUS_LOG(LOG_ERR, "[%"SCNu64"] ... SRTP protect error... %s (ssrc=%"SCNu32" ts=%"SCNu32", len=%d-->%d, ts=%"SCNu32", seq=%"SCNu16")...\n", handle->handle_id, janus_get_srtp_error(res), ssrc, pkt->length, protected, timestamp, seq);
+						//JANUS_LOG(LOG_ERR, "[%"SCNu64"] ... SRTP protect error... %s (ssrc=%"SCNu32" ts=%"SCNu32", len=%d-->%d, ts=%"SCNu32", seq=%"SCNu16")...\n", handle->handle_id, janus_get_srtp_error(res), ssrc, pkt->length, protected, timestamp, seq);
 					} else {
 						/* Shoot! */
 						//~ JANUS_LOG(LOG_VERB, "[%"SCNu64"] ... Sending SRTP packet (pt=%u, ssrc=%u, seq=%u, ts=%u)...\n", handle->handle_id,
