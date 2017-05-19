@@ -8,11 +8,11 @@
  * fixed before they are sent to the peers (e.g., to fix SSRCs that may
  * have been changed by the gateway). Methods to generate FIR messages
  * and generate/cap REMB messages are provided as well.
- * 
+ *
  * \ingroup protocols
  * \ref protocols
  */
- 
+
 #include <math.h>
 #include <stdlib.h>
 
@@ -54,6 +54,11 @@ guint32 janus_rtcp_get_sender_ssrc(char *packet, int len) {
 				/* PSFB, Payload-specific FB message (rfc4585) */
 				rtcp_fb *rtcpfb = (rtcp_fb *)rtcp;
 				return ntohl(rtcpfb->ssrc);
+			}
+			case RTCP_XR: {
+				/* XR, extended reports (rfc3611) */
+				rtcp_xr *xr = (rtcp_xr *)rtcp;
+				return ntohl(xr->ssrc);
 			}
 			default:
 				break;
@@ -343,13 +348,22 @@ int janus_rtcp_fix_ssrc(rtcp_context *ctx, char *packet, int len, int fixssrc, u
 				}
 				break;
 			}
+			case RTCP_XR: {
+				/* XR, extended reports (rfc3611) */
+				rtcp_xr *xr = (rtcp_xr *)rtcp;
+				if(fixssrc && newssrcl) {
+					xr->ssrc = htonl(newssrcl);
+				}
+				/* TODO Fix report blocks too, once we support them */
+				break;
+			}
 			default:
 				JANUS_LOG(LOG_ERR, "     Unknown RTCP PT %d\n", rtcp->type);
 				break;
 		}
 		/* Is this a compound packet? */
 		int length = ntohs(rtcp->length);
-		JANUS_LOG(LOG_HUGE, "       RTCP PT length: %d bytes\n", length*4+4);
+		JANUS_LOG(LOG_HUGE, "       RTCP PT %d, length: %d bytes\n", rtcp->type, length*4+4);
 		if(length == 0) {
 			//~ JANUS_LOG(LOG_HUGE, "  0-length, end of compound packet\n");
 			break;
@@ -383,12 +397,13 @@ char *janus_rtcp_filter(char *packet, int len, int *newlen) {
 			break;
 		bytes = length*4+4;
 		switch(rtcp->type) {
-			case RTCP_SR:
+			//case RTCP_SR:
 			case RTCP_RR:
 			case RTCP_SDES:
 				/* These are packets we generate ourselves, so remove them */
 				keep = FALSE;
 				break;
+      case RTCP_SR:
 			case RTCP_BYE:
 			case RTCP_APP:
 			case RTCP_FIR:
@@ -400,6 +415,10 @@ char *janus_rtcp_filter(char *packet, int len, int *newlen) {
 					keep = FALSE;
 					break;
 				}
+				break;
+			case RTCP_XR:
+				/* FIXME We generate RR/SR ourselves, so remove XR */
+				keep = FALSE;
 				break;
 			default:
 				JANUS_LOG(LOG_ERR, "Unknown RTCP PT %d\n", rtcp->type);

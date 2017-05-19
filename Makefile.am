@@ -18,8 +18,6 @@ AM_CFLAGS += -Wno-override-init  # we need this for JANUS_PLUGIN_INIT and JANUS_
 # AM_CFLAGS += -Wshadow -Wstrict-aliasing=2
 
 AM_CFLAGS += -fstack-protector-all -g -ggdb -fPIC -rdynamic -pthread
-AM_CFLAGS += $(MYSQL_CFLAGS)
-AM_LDFLAGS = $(MYSQL_LDFLAGS)
 
 # FIXME: make docs work with distcheck
 DISTCHECK_CONFIGURE_FLAGS = --disable-docs --enable-post-processing
@@ -98,6 +96,7 @@ janus_SOURCES = \
 	record.h \
 	rtcp.c \
 	rtcp.h \
+	rtp.c \
 	rtp.h \
 	sctp.c \
 	sctp.h \
@@ -127,7 +126,6 @@ janus_LDADD = \
 	$(BORINGSSL_LIBS) \
 	$(JANUS_LIBS) \
 	$(JANUS_MANUAL_LIBS) \
-	-lsrtp \
 	$(NULL)
 
 BUILT_SOURCES = cmdline.c cmdline.h
@@ -284,16 +282,18 @@ endif
 if ENABLE_PLUGIN_IMPSTAR
 plugin_LTLIBRARIES += plugins/libimpstar.la
 plugins_libimpstar_la_SOURCES = plugins/impstar/impstar.c \
-	 plugins/impstar/message.c \
-	 plugins/impstar/session.c \
-	 plugins/impstar/channel.c \
-         plugins/impstar/channel_helpers.c \
-	 plugins/impstar/stream.c \
-         plugins/impstar/helpers.c \
-	 plugins/impstar/sdp.c \
-         plugins/impstar/ingest.c
-plugins_libimpstar_la_CFLAGS = $(plugins_cflags) -I.. $(MYSQL_CFLAGS)
-plugins_libimpstar_la_LDFLAGS = $(plugins_ldflags) $(MYSQL_LDFLAGS)
+  plugins/impstar/message.c \
+  plugins/impstar/session.c \
+  plugins/impstar/channel.c \
+  plugins/impstar/channel_helpers.c \
+  plugins/impstar/stream.c \
+  plugins/impstar/helpers.c \
+  plugins/impstar/sdp.c \
+  plugins/impstar/ingest.c \
+  plugins/impstar/ingest_msg.c \
+  plugins/impstar/monitor.c
+plugins_libimpstar_la_CFLAGS = $(plugins_cflags)
+plugins_libimpstar_la_LDFLAGS = $(plugins_ldflags)
 plugins_libimpstar_la_LIBADD = $(plugins_libadd)
 endif
 
