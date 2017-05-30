@@ -1,5 +1,4 @@
-ACLOCAL_AMFLAGS = -I m4
-
+ACLOCAL_AMFLAGS = ${ACLOCAL_FLAGS} -I m4
 # FIXME: These flags should be produced in configure.ac using AX_APPEND_COMPILE_FLAGS
 AM_CFLAGS = \
 	-Wall -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations \
