@@ -18,6 +18,8 @@ AM_CFLAGS += -Wno-override-init  # we need this for JANUS_PLUGIN_INIT and JANUS_
 
 AM_CFLAGS += -fstack-protector-all -g -ggdb -fPIC -rdynamic -pthread
 
+AM_CXXFLAGS = -std=gnu++11
+
 # FIXME: make docs work with distcheck
 DISTCHECK_CONFIGURE_FLAGS = --disable-docs --enable-post-processing
 
