@@ -279,7 +279,7 @@ EXTRA_DIST += \
 CLEANFILES += conf/janus.plugin.streaming.cfg.sample
 endif
 
-if ENABLE_PLUGIN_IMPSTAR
+if ENABLE_PLUGIN_
 plugin_LTLIBRARIES += plugins/libimpstar.la
 plugins_libimpstar_la_SOURCES = plugins/impstar/impstar.c \
   plugins/impstar/message.c \
@@ -291,7 +291,8 @@ plugins_libimpstar_la_SOURCES = plugins/impstar/impstar.c \
   plugins/impstar/sdp.c \
   plugins/impstar/ingest.c \
   plugins/impstar/ingest_msg.c \
-  plugins/impstar/monitor.c
+  plugins/impstar/monitor.c \
+  plugins/impstar/sample.cpp \
 plugins_libimpstar_la_CFLAGS = $(plugins_cflags)
 plugins_libimpstar_la_LDFLAGS = $(plugins_ldflags)
 plugins_libimpstar_la_LIBADD = $(plugins_libadd)
