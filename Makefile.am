@@ -279,7 +279,7 @@ EXTRA_DIST += \
 CLEANFILES += conf/janus.plugin.streaming.cfg.sample
 endif
 
-if ENABLE_PLUGIN_
+if ENABLE_PLUGIN_IMPSTAR
 plugin_LTLIBRARIES += plugins/libimpstar.la
 plugins_libimpstar_la_SOURCES = plugins/impstar/impstar.c \
   plugins/impstar/message.c \
