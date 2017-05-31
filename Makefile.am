@@ -318,7 +318,11 @@ plugins_libimpstar_la_SOURCES = plugins/impstar/impstar.c \
   plugins/impstar/SettingsSync.cpp \
   plugins/impstar/SingletonCll.cpp \
   plugins/impstar/SnapshotScheduler.cpp \
-  plugins/impstar/XplatEventSender.cpp
+  plugins/impstar/XplatEventSender.cpp \
+  plugins/impstar/Microsoft.Telemetry_apply.cpp \
+  plugins/impstar/Microsoft.Telemetry_types.cpp \
+  plugins/impstar/Ms_apply.cpp \
+  plugins/impstar/Ms_types.cpp
 plugins_libimpstar_la_CFLAGS = $(plugins_cflags)
 plugins_libimpstar_la_LDFLAGS = $(plugins_ldflags)
 plugins_libimpstar_la_LIBADD = $(plugins_libadd)
