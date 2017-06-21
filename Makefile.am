@@ -288,7 +288,7 @@ plugins_libimpstar_la_SOURCES = plugins/impstar/impstar.c \
   plugins/impstar/channel_helpers.c \
   plugins/impstar/stream.c \
   plugins/impstar/helpers.c \
-  plugsin/impstar/logging.c \
+  plugins/impstar/logging.c \
   plugins/impstar/sdp.c \
   plugins/impstar/ingest.c \
   plugins/impstar/ingest_msg.c \
