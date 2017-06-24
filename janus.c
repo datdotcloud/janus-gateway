@@ -574,8 +574,15 @@ int janus_process_incoming_request(janus_request *request)
   /* Ok, let's start with the ids */
   guint64 session_id = 0, handle_id = 0;
   json_t *s = json_object_get(root, "session_id");
-  if (s && json_is_integer(s))
-    session_id = json_integer_value(s);
+  if (s && json_is_number(s)) {
+    if(json_is_integer(s)){
+      session_id = json_integer_value(s);
+    }
+    else {
+      session_id = (guint64)json_real_value(s);
+    }
+  }
+
   json_t *h = json_object_get(root, "handle_id");
   if (h && json_is_integer(h))
     handle_id = json_integer_value(h);
