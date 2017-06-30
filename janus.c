@@ -132,17 +132,17 @@ gint janus_is_stopping(void)
 
 guint64 _json_get_int64(json_t *s)
 {
-  guint64 session_id = 0;
+  guint64 value = 0;
   if (s && json_is_number(s)) {
     if(json_is_integer(s)){
-      session_id = json_integer_value(s);
+      value = json_integer_value(s);
     }
     else {
-      session_id = (guint64)json_real_value(s);
+      value = (guint64)json_real_value(s);
     }
   }
 
-  return session_id;
+  return value;
 }
 
 
@@ -597,6 +597,8 @@ int janus_process_incoming_request(janus_request *request)
 
   handle_id = _json_get_int64(h);
 
+  JANUS_LOG(LOG_INFO, "Got Session id: %" SCNu64 " and handle id: %"SCNu64"\n", session_id, handle_id);
+
   /* Get transaction and message request */
   JANUS_VALIDATE_JSON_OBJECT(root, incoming_request_parameters,
                              error_code, error_cause, FALSE,
@@ -675,6 +677,7 @@ int janus_process_incoming_request(janus_request *request)
       /* The application provided the session ID to use */
       //session_id = json_integer_value(id);
       session_id = _json_get_int64(id);
+      JANUS_LOG(LOG_INFO, "Got Session id: %"SCNu64"\n", session_id);
       if (session_id > 0 && janus_session_find(session_id) != NULL)
       {
         /* Session ID already taken */
