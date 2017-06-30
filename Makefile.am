@@ -291,7 +291,8 @@ plugins_libimpstar_la_SOURCES = plugins/impstar/impstar.c \
   plugins/impstar/sdp.c \
   plugins/impstar/ingest.c \
   plugins/impstar/ingest_msg.c \
-  plugins/impstar/monitor.c
+  plugins/impstar/monitor.c \
+  plugins/impstar/logging.c
 plugins_libimpstar_la_CFLAGS = $(plugins_cflags)
 plugins_libimpstar_la_LDFLAGS = $(plugins_ldflags)
 plugins_libimpstar_la_LIBADD = $(plugins_libadd)
