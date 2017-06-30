@@ -87,10 +87,11 @@ guint64 janus_random_uint64(void) {
 	guint64 num = g_random_int() & 0x1FFFFF;
 	num = (num << 32) | g_random_int();
 
+/*
   if(num % 10){
     num += (10 - (num % 10));
   }
-
+*/
 	return num;
 }
 
