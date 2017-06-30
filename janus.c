@@ -132,6 +132,7 @@ gint janus_is_stopping(void)
 
 guint64 _json_get_int64(json_t *s)
 {
+  guint64 session_id = -1;
   if (s && json_is_number(s)) {
     if(json_is_integer(s)){
       session_id = json_integer_value(s);
@@ -140,6 +141,8 @@ guint64 _json_get_int64(json_t *s)
       session_id = (guint64)json_real_value(s);
     }
   }
+
+  return session_id
 }
 
 
