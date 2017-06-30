@@ -142,7 +142,7 @@ guint64 _json_get_int64(json_t *s)
     }
   }
 
-  return session_id
+  return session_id;
 }
 
 
