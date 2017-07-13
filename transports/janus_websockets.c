@@ -436,6 +436,12 @@ int janus_websockets_init(janus_transport_callbacks *callback, const char *confi
 			JANUS_LOG(LOG_WARN, "WebSockets server disabled\n");
 		} else {
 			int wsport = 8188;
+			const gchar *str_ws_port = g_getenv("WS_PORT");
+
+			if(str_ws_port != NULL) {
+				wsport = atoi(str_ws_port);
+			} else //pull from config file
+
 			item = janus_config_get_item_drilldown(config, "general", "ws_port");
 			if(item && item->value)
 				wsport = atoi(item->value);
