@@ -20,7 +20,7 @@
  * case you're interested in HTTPS support, it's better to just rely on
  * HTTP in Janus, and put a frontend like Apache HTTPD or nginx to take
  * care of securing the traffic. More details are available in \ref deploy.
- * 
+ *
  * \ingroup transports
  * \ref transports
  */
@@ -162,7 +162,7 @@ int janus_http_return_error(janus_http_msg *msg, uint64_t session_id, const char
 /* MHD Web Server */
 static struct MHD_Daemon *ws = NULL, *sws = NULL;
 static char *ws_path = NULL;
-static char *cert_pem_bytes = NULL, *cert_key_bytes = NULL; 
+static char *cert_pem_bytes = NULL, *cert_key_bytes = NULL;
 
 /* Admin/Monitor MHD Web Server */
 static struct MHD_Daemon *admin_ws = NULL, *admin_sws = NULL;
@@ -742,10 +742,16 @@ int janus_http_init(janus_transport_callbacks *callback, const char *config_path
 		if(!item || !item->value || !janus_is_true(item->value)) {
 			JANUS_LOG(LOG_WARN, "Admin/monitor HTTP webserver disabled\n");
 		} else {
-			int wsport = 7088;
-			item = janus_config_get_item_drilldown(config, "admin", "admin_port");
-			if(item && item->value)
-				wsport = atoi(item->value);
+			int admin_port = 7088;
+			const gchar *str_admin_port = g_getenv("ADMIN_PORT");
+			if(str_admin_port != NULL) { //if the environment variable is set, that takes precedence
+				JANUS_LOG(LOG_INFO, "ADMIN_PORT set to %s\n", str_admin_port);
+				admin_port = atoi(str_admin_port);
+			} else { //pull from config file
+				item = janus_config_get_item_drilldown(config, "admin", "admin_port");
+				if(item && item->value)
+					admin_port = atoi(item->value);
+			}
 			const char *interface = NULL;
 			item = janus_config_get_item_drilldown(config, "admin", "admin_interface");
 			if(item && item->value)
@@ -754,11 +760,11 @@ int janus_http_init(janus_transport_callbacks *callback, const char *config_path
 			item = janus_config_get_item_drilldown(config, "admin", "admin_ip");
 			if(item && item->value)
 				ip = item->value;
-			admin_ws = janus_http_create_daemon(TRUE, admin_ws_path, interface, ip, wsport, threads, NULL, NULL);
+			admin_ws = janus_http_create_daemon(TRUE, admin_ws_path, interface, ip, admin_port, threads, NULL, NULL);
 			if(admin_ws == NULL) {
-				JANUS_LOG(LOG_FATAL, "Couldn't start admin/monitor webserver on port %d...\n", wsport);
+				JANUS_LOG(LOG_FATAL, "Couldn't start admin/monitor webserver on port %d...\n", admin_port);
 			} else {
-				JANUS_LOG(LOG_INFO, "Admin/monitor HTTP webserver started (port %d, %s path listener)...\n", wsport, admin_ws_path);
+				JANUS_LOG(LOG_INFO, "Admin/monitor HTTP webserver started (port %d, %s path listener)...\n", admin_port, admin_ws_path);
 			}
 		}
 		/* Do we also have to provide an HTTPS one? */
@@ -793,7 +799,7 @@ int janus_http_init(janus_transport_callbacks *callback, const char *config_path
 	janus_config_destroy(config);
 	config = NULL;
 	if(!ws && !sws && !admin_ws && !admin_sws) {
-		JANUS_LOG(LOG_FATAL, "No HTTP/HTTPS server started, giving up...\n"); 
+		JANUS_LOG(LOG_FATAL, "No HTTP/HTTPS server started, giving up...\n");
 		return -1;	/* No point in keeping the plugin loaded */
 	}
 	http_janus_api_enabled = ws || sws;
@@ -812,7 +818,7 @@ int janus_http_init(janus_transport_callbacks *callback, const char *config_path
 		JANUS_LOG(LOG_ERR, "Got error %d (%s) trying to launch the HTTP/Janus sessions watchdog thread...\n", error->code, error->message ? error->message : "??");
 		return -1;
 	}
-	
+
 	/* Done */
 	g_atomic_int_set(&initialized, 1);
 	JANUS_LOG(LOG_INFO, "%s initialized!\n", JANUS_REST_NAME);
@@ -1200,13 +1206,13 @@ int janus_http_handler(void *cls, struct MHD_Connection *connection, const char 
 		/* Turn this into a fake "info" request */
 		method = "POST";
 		char tr[12];
-		janus_http_random_string(12, (char *)&tr);		
+		janus_http_random_string(12, (char *)&tr);
 		root = json_object();
 		json_object_set_new(root, "janus", json_string("info"));
 		json_object_set_new(root, "transaction", json_string(tr));
 		goto parsingdone;
 	}
-	
+
 	/* Or maybe a long poll */
 	if(!strcasecmp(method, "GET") || !payload) {
 		session_id = session_path ? g_ascii_strtoull(session_path, NULL, 10) : 0;
@@ -1260,7 +1266,7 @@ int janus_http_handler(void *cls, struct MHD_Connection *connection, const char 
 		}
 		/* Ok, go on with the keepalive */
 		char tr[12];
-		janus_http_random_string(12, (char *)&tr);		
+		janus_http_random_string(12, (char *)&tr);
 		root = json_object();
 		json_object_set_new(root, "janus", json_string("keepalive"));
 		json_object_set_new(root, "session_id", json_integer(session_id));
@@ -1344,7 +1350,7 @@ int janus_http_handler(void *cls, struct MHD_Connection *connection, const char 
 		}
 		goto done;
 	}
-	
+
 	json_error_t error;
 	/* Parse the JSON payload */
 	root = json_loads(payload, 0, &error);
@@ -1580,13 +1586,13 @@ int janus_http_admin_handler(void *cls, struct MHD_Connection *connection, const
 		/* Turn this into a fake "info" request */
 		method = "POST";
 		char tr[12];
-		janus_http_random_string(12, (char *)&tr);		
+		janus_http_random_string(12, (char *)&tr);
 		root = json_object();
 		json_object_set_new(root, "janus", json_string("info"));
 		json_object_set_new(root, "transaction", json_string(tr));
 		goto parsingdone;
 	}
-	
+
 	/* Without a payload we don't know what to do */
 	if(!payload) {
 		ret = janus_http_return_error(msg, 0, NULL, JANUS_ERROR_INVALID_JSON, "Request payload missing");
@@ -1680,7 +1686,7 @@ void janus_http_request_completed(void *cls, struct MHD_Connection *connection, 
 	if(request->acrm != NULL)
 		g_free(request->acrm);
 	g_free(request);
-	*con_cls = NULL;   
+	*con_cls = NULL;
 }
 
 /* Worker to handle notifications */
