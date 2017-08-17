@@ -20,7 +20,7 @@ node("master") {
             }
 
             stage("Make") {
-                sh 'make -c ./plugins/impstar/lumberdroid'
+                sh 'make -C ./plugins/impstar/lumberdroid'
             }
             stage("make all") {
                 sh "cd build_scripts && ./janus.bash '${artifactDir}'"
