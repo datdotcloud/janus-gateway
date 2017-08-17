@@ -7,26 +7,20 @@ node("master") {
     def artifactDir = "${projectDir}/build"
 
     try {
-        sh "mkdir -p '${projectDir}'"
-        dir ("build") {
-            stage("Cmake") {
-                sh '/tmp/nvs/cmake39/bin/cmake ./plugins/impstar/lumberdroid/CMakeLists.txt'
-            }
-
-            stage("Make") {
-                sh 'make'
-            }   
-
-            stage("Artifacts") {
-                archiveArtifacts artifacts: "LumberdroidClient", fingerprint: true
-            }   
-        }     
+        sh "mkdir -p '${projectDir}'" 
         dir (projectDir) {
             stage("Checkout") {
                 checkout scm
             }
             stage("submodules") {
                 sh 'git submodule update --init -- recursive'
+            }
+            stage("Cmake") {
+                sh '/tmp/nvs/cmake39/bin/cmake ./plugins/impstar/lumberdroid/CMakeLists.txt'
+            }
+
+            stage("Make") {
+                sh 'make ./plugins/impstar/lumberdroid/.'
             }
             stage("make all") {
                 sh "cd build_scripts && ./janus.bash '${artifactDir}'"
