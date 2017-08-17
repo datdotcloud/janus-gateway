@@ -13,7 +13,7 @@ node("master") {
                 checkout scm
             }
             stage("submodules") {
-                sh 'git submodule update --init -- recursive'
+                sh 'git submodule update --init --recursive'
             }
             stage("Cmake") {
                 sh '/tmp/nvs/cmake39/bin/cmake ./plugins/impstar/lumberdroid/CMakeLists.txt'
