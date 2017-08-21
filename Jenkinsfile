@@ -22,6 +22,10 @@ node("master") {
             stage("Make") {
                 sh 'make -C ./plugins/impstar/lumberdroid'
             }
+            stage("Move"){
+                sh "mv ./plugins/impstar/lumberdroid/libLumberUtils.a ./plugins/impstar/libLumberUtils.a"
+                sh "mv ./plugins/impstar/lumberdroid/libLumberdroidClient.a ./plugins/impstar/libLumberdroidClient.a"
+            }
             stage("make all") {
                 sh "cd build_scripts && ./janus.bash '${artifactDir}'"
             }
