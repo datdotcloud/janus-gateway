@@ -295,7 +295,7 @@ plugins_libimpstar_la_SOURCES = plugins/impstar/impstar.c \
   plugins/impstar/logging.c
 plugins_libimpstar_la_CFLAGS = $(plugins_cflags)
 plugins_libimpstar_la_LDFLAGS = $(plugins_ldflags)
-plugins_libimpstar_la_LIBADD = $(plugins_libadd) -lLumberdroidClient -lLumberUtils
+plugins_libimpstar_la_LIBADD = $(plugins_libadd) libLumberdroidClient.a libLumberUtils.a
 endif
 
 if ENABLE_PLUGIN_VIDEOCALL
