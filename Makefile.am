@@ -22,7 +22,7 @@ AM_CFLAGS += -fstack-protector-all -g -ggdb -fPIC -rdynamic -pthread
 # FIXME: make docs work with distcheck
 DISTCHECK_CONFIGURE_FLAGS = --disable-docs --enable-post-processing
 
-EXTRA_DIST = $(NULL)
+EXTRA_DIST = bootstrap $(NULL)
 CLEANFILES = $(NULL)
 
 bin_PROGRAMS = janus
@@ -294,8 +294,8 @@ plugins_libimpstar_la_SOURCES = plugins/impstar/impstar.c \
   plugins/impstar/monitor.c \
   plugins/impstar/logging.c
 plugins_libimpstar_la_CFLAGS = $(plugins_cflags)
-plugins_libimpstar_la_LDFLAGS = $(plugins_ldflags) -lstdc++ -Lplugins/impstar/lumberdroid/. -lLumberdroidClient -lLumberUtils
-plugins_libimpstar_la_LIBADD = $(plugins_libadd)
+plugins_libimpstar_la_LDFLAGS = $(plugins_ldflags) -lstdc++ -Lplugins/impstar/lumberdroid/. -lLumberdroidClient -lLumberUtils $(BOOST_LDFLAGS)
+plugins_libimpstar_la_LIBADD = $(plugins_libadd) $(BOOST_SYSTEM_LIB)
 endif
 
 if ENABLE_PLUGIN_VIDEOCALL
