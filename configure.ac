@@ -323,7 +323,7 @@ AC_CHECK_LIB([paho-mqtt3a],
              ])
 AM_CONDITIONAL([ENABLE_RABBITMQ], [test "x$enable_rabbitmq" = "xyes"])
 AX_LIB_MYSQL(,,AC_MSG_ERROR("Can't find mysql library" ))
-AX_BOOST_BASE([1.48], [AC_MSG_ERROR([libLumberdroid needs Boost, but it was not found in your system])])
+AX_BOOST_BASE([1.48], AC_MSG_ERROR("libLumberdroid needs Boost, but it was not found in your system"))
 AX_BOOST_SYSTEM
 AM_CONDITIONAL([ENABLE_MQTT], [test "x$enable_mqtt" = "xyes"])
 
