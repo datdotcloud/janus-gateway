@@ -19,10 +19,15 @@ AM_CFLAGS += -Wno-override-init  # we need this for JANUS_PLUGIN_INIT and JANUS_
 
 AM_CFLAGS += -fstack-protector-all -g -ggdb -fPIC -rdynamic -pthread
 
+AM_CFLAGS += $(BOOST_CPPFLAGS)
+
+AM_LDFLAGS = $(BOOST_LDFLAGS)
+
 # FIXME: make docs work with distcheck
 DISTCHECK_CONFIGURE_FLAGS = --disable-docs --enable-post-processing
 
-EXTRA_DIST = bootstrap $(NULL)
+EXTRA_DIST = $(NULL)
+EXTRA_DIST += bootstrap
 CLEANFILES = $(NULL)
 
 bin_PROGRAMS = janus
@@ -126,6 +131,7 @@ janus_LDADD = \
 	$(BORINGSSL_LIBS) \
 	$(JANUS_LIBS) \
 	$(JANUS_MANUAL_LIBS) \
+	$(BOOST_THREAD_LIB) \
 	$(NULL)
 
 BUILT_SOURCES = cmdline.c cmdline.h
