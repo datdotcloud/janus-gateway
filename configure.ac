@@ -18,7 +18,7 @@ LT_INIT
 
 case "$host_os" in
 darwin*)
-	CXXFLAGS="$CXXFLAGS -I/usr/local/opt/openssl/include -I/usr/local/include `pkg-config --cflags --libs glib-2.0`"
+	CXXFLAGS="$CXXFLAGS -I/usr/local/opt/openssl/include -I/usr/local/include"
 	LDFLAGS="$LDFLAGS -L/usr/local/lib -L/usr/local/opt/openssl/lib -L/opt/local/lib -L/usr/local/libsrtp/lib"
 	AM_CONDITIONAL([DARWIN_OS], true)
 	AM_CONDITIONAL([HAS_DTLS_WINDOW_SIZE], false)
@@ -29,6 +29,7 @@ darwin*)
 esac
 
 glib_version=2.32
+CXXFLAGS += "`pkg-config --cflags --libs glib-2.0`"
 ssl_version=1.0.1
 
 ##
