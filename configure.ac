@@ -18,7 +18,7 @@ LT_INIT
 
 case "$host_os" in
 darwin*)
-	CFLAGS="$CFLAGS -I/usr/local/opt/openssl/include -I/usr/local/include"
+	CXXFLAGS="$CXXFLAGS -I/usr/local/opt/openssl/include -I/usr/local/include"
 	LDFLAGS="$LDFLAGS -L/usr/local/lib -L/usr/local/opt/openssl/lib -L/opt/local/lib -L/usr/local/libsrtp/lib"
 	AM_CONDITIONAL([DARWIN_OS], true)
 	AM_CONDITIONAL([HAS_DTLS_WINDOW_SIZE], false)
@@ -114,9 +114,9 @@ AC_SUBST(JANUS_MANUAL_LIBS)
 
 AS_IF([test "x$enable_boringssl" = "xyes"],
 	  [echo "Trying to use BoringSSL instead of OpenSSL...";
-	   CFLAGS="$CFLAGS -I/opt/boringssl/include";
-	   BORINGSSL_CFLAGS=" -I/opt/boringssl/include";
-       AC_SUBST(BORINGSSL_CFLAGS)
+	   CXXFLAGS="$CXXFLAGS -I/opt/boringssl/include";
+	   BORINGSSL_CXXFLAGS=" -I/opt/boringssl/include";
+       AC_SUBST(BORINGSSL_CXXFLAGS)
 	   BORINGSSL_LIBS=" -L/opt/boringssl/lib";
        AC_SUBST(BORINGSSL_LIBS)
 	   AC_CHECK_HEADERS([openssl/opensslconf.h],
@@ -259,7 +259,7 @@ PKG_CHECK_MODULES([MHD],
                     AS_IF([test "x$enable_rest" = "xyes"],
                           [AC_MSG_ERROR([libmicrohttpd not found. See README.md for installation instructions or use --disable-rest])])
                   ])
-AC_SUBST([MHD_CFLAGS])
+AC_SUBST([MHD_CXXFLAGS])
 AC_SUBST([MHD_LIBS])
 AM_CONDITIONAL([ENABLE_REST], [test "x$enable_rest" = "xyes"])
 
@@ -429,7 +429,7 @@ PKG_CHECK_MODULES([SOFIA],
                     AS_IF([test "x$enable_plugin_sip" = "xyes"],
                           [AC_MSG_ERROR([sofia-sip-ua not found not found. See README.md for installation instructions or use --disable-plugin-sip])])
                   ])
-AC_SUBST([SOFIA_CFLAGS])
+AC_SUBST([SOFIA_CXXFLAGS])
 AC_SUBST([SOFIA_LIBS])
 
 PKG_CHECK_MODULES([OPUS],
@@ -442,7 +442,7 @@ PKG_CHECK_MODULES([OPUS],
                     AS_IF([test "x$enable_plugin_audiobridge" = "xyes"],
                           [AC_MSG_ERROR([libopus not found not found. See README.md for installation instructions or use --disable-plugin-audiobridge])])
                   ])
-AC_SUBST([OPUS_CFLAGS])
+AC_SUBST([OPUS_CXXFLAGS])
 AC_SUBST([OPUS_LIBS])
 
 PKG_CHECK_MODULES([OGG],
@@ -455,7 +455,7 @@ PKG_CHECK_MODULES([OGG],
                     AS_IF([test "x$enable_plugin_voicemail" = "xyes"],
                           [AC_MSG_ERROR([libogg not found not found. See README.md for installation instructions or use --disable-plugin-voicemail])])
                   ])
-AC_SUBST([OGG_CFLAGS])
+AC_SUBST([OGG_CXXFLAGS])
 AC_SUBST([OGG_LIBS])
 
 AM_CONDITIONAL([ENABLE_PLUGIN_AUDIOBRIDGE], [test "x$enable_plugin_audiobridge" = "xyes"])

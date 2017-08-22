@@ -1,7 +1,7 @@
 ACLOCAL_AMFLAGS = -I m4
 
 # FIXME: These flags should be produced in configure.ac using AX_APPEND_COMPILE_FLAGS
-AM_CFLAGS = \
+AM_CXXFLAGS = \
 	-Wall -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations \
 	-Wunused -fstrict-aliasing -Wextra -Wformat=2 -Winit-self -Winline \
 	-Wpacked -Wpointer-arith -Wmissing-format-attribute -Wmissing-noreturn \
@@ -10,14 +10,14 @@ AM_CFLAGS = \
 	-Wcast-align -Wformat-nonliteral -Wformat-security -Wswitch-default \
 	-Wmissing-include-dirs -Wno-aggregate-return -Wunused-but-set-variable \
 	-Warray-bounds -Wold-style-definition -Wsign-compare -Wlarger-than=65537
-AM_CFLAGS += -Wno-undef  # sofiasip is not -Wundef--safe
-AM_CFLAGS += -Wno-redundant-decls  # sofiasip also contains redundant declarations
-AM_CFLAGS += -Wno-override-init  # we need this for JANUS_PLUGIN_INIT and JANUS_TRANSPORT_INIT
+AM_CXXFLAGS += -Wno-undef  # sofiasip is not -Wundef--safe
+AM_CXXFLAGS += -Wno-redundant-decls  # sofiasip also contains redundant declarations
+AM_CXXFLAGS += -Wno-override-init  # we need this for JANUS_PLUGIN_INIT and JANUS_TRANSPORT_INIT
 # FIXME: These should be enabled once the code is safe for them. That requires
 # some fairly big refactoring though, which can wait.
-# AM_CFLAGS += -Wshadow -Wstrict-aliasing=2
+# AM_CXXFLAGS += -Wshadow -Wstrict-aliasing=2
 
-AM_CFLAGS += -fstack-protector-all -g -ggdb -fPIC -rdynamic -pthread
+AM_CXXFLAGS += -fstack-protector-all -g -ggdb -fPIC -rdynamic -pthread
 
 # FIXME: make docs work with distcheck
 DISTCHECK_CONFIGURE_FLAGS = --disable-docs --enable-post-processing
@@ -113,13 +113,13 @@ janus_SOURCES = \
 	transports/transport.h \
 	$(NULL)
 
-janus_CFLAGS = \
-	$(AM_CFLAGS) \
-	$(JANUS_CFLAGS) \
+janus_CXXFLAGS = \
+	$(AM_CXXFLAGS) \
+	$(JANUS_CXXFLAGS) \
 	-DPLUGINDIR=\"$(plugindir)\" \
 	-DTRANSPORTDIR=\"$(transportdir)\" \
 	-DCONFDIR=\"$(confdir)\" \
-	$(BORINGSSL_CFLAGS) \
+	$(BORINGSSL_CXXFLAGS) \
 	$(NULL)
 
 janus_LDADD = \
@@ -141,8 +141,8 @@ CLEANFILES += cmdline.c cmdline.h
 ##
 
 transports_cflags = \
-	$(AM_CFLAGS) \
-	$(TRANSPORTS_CFLAGS) \
+	$(AM_CXXFLAGS) \
+	$(TRANSPORTS_CXXFLAGS) \
 	$(NULL)
 
 transports_libadd = \
@@ -152,7 +152,7 @@ transports_libadd = \
 if ENABLE_REST
 transport_LTLIBRARIES += transports/libjanus_http.la
 transports_libjanus_http_la_SOURCES = transports/janus_http.c
-transports_libjanus_http_la_CFLAGS = $(transports_cflags) $(MHD_CFLAGS)
+transports_libjanus_http_la_CXXFLAGS = $(transports_cflags) $(MHD_CXXFLAGS)
 transports_libjanus_http_la_LDFLAGS = $(transports_ldflags) $(MHD_LDFLAGS) $(MHD_LIBS)
 transports_libjanus_http_la_LIBADD = $(transports_libadd) $(MHD_LDFLAGS)
 conf_DATA += conf/janus.transport.http.cfg.sample
@@ -163,7 +163,7 @@ endif
 if ENABLE_WEBSOCKETS
 transport_LTLIBRARIES += transports/libjanus_websockets.la
 transports_libjanus_websockets_la_SOURCES = transports/janus_websockets.c
-transports_libjanus_websockets_la_CFLAGS = $(transports_cflags)
+transports_libjanus_websockets_la_CXXFLAGS = $(transports_cflags)
 transports_libjanus_websockets_la_LDFLAGS = $(transports_ldflags) $(WS_MANUAL_LIBS)
 transports_libjanus_websockets_la_LIBADD = $(transports_libadd)
 conf_DATA += conf/janus.transport.websockets.cfg.sample
@@ -174,7 +174,7 @@ endif
 if ENABLE_RABBITMQ
 transport_LTLIBRARIES += transports/libjanus_rabbitmq.la
 transports_libjanus_rabbitmq_la_SOURCES = transports/janus_rabbitmq.c
-transports_libjanus_rabbitmq_la_CFLAGS = $(transports_cflags)
+transports_libjanus_rabbitmq_la_CXXFLAGS = $(transports_cflags)
 transports_libjanus_rabbitmq_la_LDFLAGS = $(transports_ldflags) -lrabbitmq
 transports_libjanus_rabbitmq_la_LIBADD = $(transports_libadd)
 conf_DATA += conf/janus.transport.rabbitmq.cfg.sample
@@ -184,7 +184,7 @@ endif
 if ENABLE_MQTT
 transport_LTLIBRARIES += transports/libjanus_mqtt.la
 transports_libjanus_mqtt_la_SOURCES = transports/janus_mqtt.c
-transports_libjanus_mqtt_la_CFLAGS = $(transports_cflags)
+transports_libjanus_mqtt_la_CXXFLAGS = $(transports_cflags)
 transports_libjanus_mqtt_la_LDFLAGS = $(transports_ldflags) -lpaho-mqtt3a
 transports_libjanus_mqtt_la_LIBADD = $(transports_libadd)
 conf_DATA += conf/janus.transport.mqtt.cfg.sample
@@ -194,7 +194,7 @@ endif
 if ENABLE_PFUNIX
 transport_LTLIBRARIES += transports/libjanus_pfunix.la
 transports_libjanus_pfunix_la_SOURCES = transports/janus_pfunix.c
-transports_libjanus_pfunix_la_CFLAGS = $(transports_cflags)
+transports_libjanus_pfunix_la_CXXFLAGS = $(transports_cflags)
 transports_libjanus_pfunix_la_LDFLAGS = $(transports_ldflags)
 transports_libjanus_pfunix_la_LIBADD = $(transports_libadd)
 conf_DATA += conf/janus.transport.pfunix.cfg.sample
@@ -206,8 +206,8 @@ endif
 ##
 
 plugins_cflags = \
-	$(AM_CFLAGS) \
-	$(PLUGINS_CFLAGS) \
+	$(AM_CXXFLAGS) \
+	$(PLUGINS_CXXFLAGS) \
 	$(NULL)
 
 plugins_libadd = \
@@ -217,7 +217,7 @@ plugins_libadd = \
 if ENABLE_PLUGIN_AUDIOBRIDGE
 plugin_LTLIBRARIES += plugins/libjanus_audiobridge.la
 plugins_libjanus_audiobridge_la_SOURCES = plugins/janus_audiobridge.c
-plugins_libjanus_audiobridge_la_CFLAGS = $(plugins_cflags) $(OPUS_CFLAGS)
+plugins_libjanus_audiobridge_la_CXXFLAGS = $(plugins_cflags) $(OPUS_CXXFLAGS)
 plugins_libjanus_audiobridge_la_LDFLAGS = $(plugins_ldflags) $(OPUS_LDFLAGS) $(OPUS_LIBS)
 plugins_libjanus_audiobridge_la_LIBADD = $(plugins_libadd) $(OPUS_LIBADD)
 conf_DATA += conf/janus.plugin.audiobridge.cfg.sample
@@ -227,7 +227,7 @@ endif
 if ENABLE_PLUGIN_ECHOTEST
 plugin_LTLIBRARIES += plugins/libjanus_echotest.la
 plugins_libjanus_echotest_la_SOURCES = plugins/janus_echotest.c
-plugins_libjanus_echotest_la_CFLAGS = $(plugins_cflags)
+plugins_libjanus_echotest_la_CXXFLAGS = $(plugins_cflags)
 plugins_libjanus_echotest_la_LDFLAGS = $(plugins_ldflags)
 plugins_libjanus_echotest_la_LIBADD = $(plugins_libadd)
 conf_DATA += conf/janus.plugin.echotest.cfg.sample
@@ -237,7 +237,7 @@ endif
 if ENABLE_PLUGIN_RECORDPLAY
 plugin_LTLIBRARIES += plugins/libjanus_recordplay.la
 plugins_libjanus_recordplay_la_SOURCES = plugins/janus_recordplay.c
-plugins_libjanus_recordplay_la_CFLAGS = $(plugins_cflags)
+plugins_libjanus_recordplay_la_CXXFLAGS = $(plugins_cflags)
 plugins_libjanus_recordplay_la_LDFLAGS = $(plugins_ldflags)
 plugins_libjanus_recordplay_la_LIBADD = $(plugins_libadd)
 conf_DATA += conf/janus.plugin.recordplay.cfg.sample
@@ -254,7 +254,7 @@ endif
 if ENABLE_PLUGIN_SIP
 plugin_LTLIBRARIES += plugins/libjanus_sip.la
 plugins_libjanus_sip_la_SOURCES = plugins/janus_sip.c
-plugins_libjanus_sip_la_CFLAGS = $(plugins_cflags) $(SOFIA_CFLAGS)
+plugins_libjanus_sip_la_CXXFLAGS = $(plugins_cflags) $(SOFIA_CXXFLAGS)
 plugins_libjanus_sip_la_LDFLAGS = $(plugins_ldflags) $(SOFIA_LDFLAGS) $(SOFIA_LIBS)
 plugins_libjanus_sip_la_LIBADD = $(plugins_libadd) $(SOFIA_LIBADD)
 conf_DATA += conf/janus.plugin.sip.cfg.sample
@@ -264,7 +264,7 @@ endif
 if ENABLE_PLUGIN_STREAMING
 plugin_LTLIBRARIES += plugins/libjanus_streaming.la
 plugins_libjanus_streaming_la_SOURCES = plugins/janus_streaming.c
-plugins_libjanus_streaming_la_CFLAGS = $(plugins_cflags)
+plugins_libjanus_streaming_la_CXXFLAGS = $(plugins_cflags)
 plugins_libjanus_streaming_la_LDFLAGS = $(plugins_ldflags)
 plugins_libjanus_streaming_la_LIBADD = $(plugins_libadd)
 conf_DATA += conf/janus.plugin.streaming.cfg.sample
@@ -293,7 +293,7 @@ plugins_libimpstar_la_SOURCES = plugins/impstar/impstar.c \
   plugins/impstar/ingest_msg.c \
   plugins/impstar/monitor.c \
   plugins/impstar/logging.c
-plugins_libimpstar_la_CFLAGS = $(plugins_cflags)
+plugins_libimpstar_la_CXXFLAGS = $(plugins_cflags)
 plugins_libimpstar_la_LDFLAGS = $(plugins_ldflags) -lstdc++ -Lplugins/impstar/lumberdroid/. -lLumberdroidClient -lLumberUtils
 plugins_libimpstar_la_LIBADD = $(plugins_libadd)
 endif
@@ -301,7 +301,7 @@ endif
 if ENABLE_PLUGIN_VIDEOCALL
 plugin_LTLIBRARIES += plugins/libjanus_videocall.la
 plugins_libjanus_videocall_la_SOURCES = plugins/janus_videocall.c
-plugins_libjanus_videocall_la_CFLAGS = $(plugins_cflags)
+plugins_libjanus_videocall_la_CXXFLAGS = $(plugins_cflags)
 plugins_libjanus_videocall_la_LDFLAGS = $(plugins_ldflags)
 plugins_libjanus_videocall_la_LIBADD = $(plugins_libadd)
 conf_DATA += conf/janus.plugin.videocall.cfg.sample
@@ -311,7 +311,7 @@ endif
 if ENABLE_PLUGIN_VIDEOROOM
 plugin_LTLIBRARIES += plugins/libjanus_videoroom.la
 plugins_libjanus_videoroom_la_SOURCES = plugins/janus_videoroom.c
-plugins_libjanus_videoroom_la_CFLAGS = $(plugins_cflags)
+plugins_libjanus_videoroom_la_CXXFLAGS = $(plugins_cflags)
 plugins_libjanus_videoroom_la_LDFLAGS = $(plugins_ldflags)
 plugins_libjanus_videoroom_la_LIBADD = $(plugins_libadd)
 conf_DATA += conf/janus.plugin.videoroom.cfg.sample
@@ -321,7 +321,7 @@ endif
 if ENABLE_PLUGIN_VOICEMAIL
 plugin_LTLIBRARIES += plugins/libjanus_voicemail.la
 plugins_libjanus_voicemail_la_SOURCES = plugins/janus_voicemail.c
-plugins_libjanus_voicemail_la_CFLAGS = $(plugins_cflags)
+plugins_libjanus_voicemail_la_CXXFLAGS = $(plugins_cflags)
 plugins_libjanus_voicemail_la_LDFLAGS = $(plugins_ldflags) -logg
 plugins_libjanus_voicemail_la_LIBADD = $(plugins_libadd)
 conf_DATA += conf/janus.plugin.voicemail.cfg.sample
@@ -331,7 +331,7 @@ endif
 if ENABLE_PLUGIN_TEXTROOM
 plugin_LTLIBRARIES += plugins/libjanus_textroom.la
 plugins_libjanus_textroom_la_SOURCES = plugins/janus_textroom.c
-plugins_libjanus_textroom_la_CFLAGS = $(plugins_cflags)
+plugins_libjanus_textroom_la_CXXFLAGS = $(plugins_cflags)
 plugins_libjanus_textroom_la_LDFLAGS = $(plugins_ldflags)
 plugins_libjanus_textroom_la_LIBADD = $(plugins_libadd)
 conf_DATA += conf/janus.plugin.textroom.cfg.sample
@@ -362,9 +362,9 @@ janus_pp_rec_SOURCES = \
 	log.c \
 	$(NULL)
 
-janus_pp_rec_CFLAGS = \
-	$(AM_CFLAGS) \
-	$(POST_PROCESSING_CFLAGS) \
+janus_pp_rec_CXXFLAGS = \
+	$(AM_CXXFLAGS) \
+	$(POST_PROCESSING_CXXFLAGS) \
 	$(NULL)
 
 janus_pp_rec_LDADD = \
