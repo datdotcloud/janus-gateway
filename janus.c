@@ -855,7 +855,7 @@ int janus_process_incoming_request(janus_request *request)
     json_object_set_new(reply, "transaction", json_string(transaction_text));
     json_t *data = json_object();
     json_object_set_new(data, "id", json_integer(handle_id));
-    json_object_set_new(data, "version", json_string(plugin_t->get_version_string));
+    json_object_set_new(data, "version", json_string(plugin_t->get_version_string()));
     json_object_set_new(reply, "data", data);
     /* Send the success reply */
     ret = janus_process_success(request, reply);
