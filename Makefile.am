@@ -1,5 +1,4 @@
-ACLOCAL_AMFLAGS = -I m4
-
+ACLOCAL_AMFLAGS = ${ACLOCAL_FLAGS} -I m4
 # FIXME: These flags should be produced in configure.ac using AX_APPEND_COMPILE_FLAGS
 AM_CFLAGS = \
 	-Wall -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations \
@@ -18,6 +17,8 @@ AM_CFLAGS += -Wno-override-init  # we need this for JANUS_PLUGIN_INIT and JANUS_
 # AM_CFLAGS += -Wshadow -Wstrict-aliasing=2
 
 AM_CFLAGS += -fstack-protector-all -g -ggdb -fPIC -rdynamic -pthread
+
+AM_CXXFLAGS = -std=gnu++11
 
 # FIXME: make docs work with distcheck
 DISTCHECK_CONFIGURE_FLAGS = --disable-docs --enable-post-processing
@@ -292,6 +293,36 @@ plugins_libimpstar_la_SOURCES = plugins/impstar/impstar.c \
   plugins/impstar/ingest.c \
   plugins/impstar/ingest_msg.c \
   plugins/impstar/monitor.c \
+  plugins/impstar/sample.cpp \
+  plugins/impstar/AbstractCll.cpp \
+  plugins/impstar/AbstractEventhandler.cpp \
+  plugins/impstar/AbstractTimer.cpp \
+  plugins/impstar/BondHelpers.cpp \
+  plugins/impstar/ClientTelemetry.cpp \
+  plugins/impstar/CllApi.cpp \
+  plugins/impstar/CllConstants.cpp \
+  plugins/impstar/ConversionHelpers.cpp \
+  plugins/impstar/CorrelationVector.cpp \
+  plugins/impstar/CoutLogger.cpp \
+  plugins/impstar/CriticalEventHandler.cpp \
+  plugins/impstar/EnvelopeExtensions.cpp \
+  plugins/impstar/EventBatcher.cpp \
+  plugins/impstar/EventCompressor.cpp \
+  plugins/impstar/Eventhandler.cpp \
+  plugins/impstar/EventSerializer.cpp \
+  plugins/impstar/FileStorage.cpp \
+  plugins/impstar/NormalEventHandler.cpp \
+  plugins/impstar/PartA.cpp \
+  plugins/impstar/SettingsPersistence.cpp \
+  plugins/impstar/SettingsStore.cpp \
+  plugins/impstar/SettingsSync.cpp \
+  plugins/impstar/SingletonCll.cpp \
+  plugins/impstar/SnapshotScheduler.cpp \
+  plugins/impstar/XplatEventSender.cpp \
+  plugins/impstar/Microsoft.Telemetry_apply.cpp \
+  plugins/impstar/Microsoft.Telemetry_types.cpp \
+  plugins/impstar/Ms_apply.cpp \
+  plugins/impstar/Ms_types.cpp
   plugins/impstar/logging.c \
 	plugins/impstar/health.c \
   plugins/impstar/xpert.c
