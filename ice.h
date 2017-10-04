@@ -485,7 +485,7 @@ janus_ice_handle *janus_ice_handle_find(void *gateway_session, guint64 handle_id
  * @param[in] handle_id The Janus ICE handle ID
  * @param[in] plugin The plugin the ICE handle needs to be attached to
  * @returns 0 in case of success, a negative integer otherwise */
-gint janus_ice_handle_attach_plugin(void *gateway_session, guint64 handle_id, janus_plugin *plugin);
+gint janus_ice_handle_attach_plugin(void *gateway_session, guint64 handle_id, janus_plugin *plugin, json_t *opts);
 /*! \brief Method to destroy a Janus ICE handle
  * @param[in] gateway_session The gateway/peer session this ICE handle belongs to
  * @param[in] handle_id The Janus ICE handle ID to destroy

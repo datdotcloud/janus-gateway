@@ -130,6 +130,22 @@ gint janus_is_stopping(void)
   return g_atomic_int_get(&stop);
 }
 
+guint64 _json_get_int64(json_t *s)
+{
+  guint64 value = 0;
+  if (s && json_is_number(s)) {
+    if(json_is_integer(s)){
+      value = json_integer_value(s);
+    }
+    else {
+      value = (guint64)json_real_value(s);
+    }
+  }
+
+  return value;
+}
+
+
 /* Public instance name */
 static gchar *server_name = NULL;
 
@@ -574,11 +590,12 @@ int janus_process_incoming_request(janus_request *request)
   /* Ok, let's start with the ids */
   guint64 session_id = 0, handle_id = 0;
   json_t *s = json_object_get(root, "session_id");
-  if (s && json_is_integer(s))
-    session_id = json_integer_value(s);
+
+  session_id = _json_get_int64(s);
+
   json_t *h = json_object_get(root, "handle_id");
-  if (h && json_is_integer(h))
-    handle_id = json_integer_value(h);
+
+  handle_id = _json_get_int64(h);
 
   /* Get transaction and message request */
   JANUS_VALIDATE_JSON_OBJECT(root, incoming_request_parameters,
@@ -656,7 +673,8 @@ int janus_process_incoming_request(janus_request *request)
     if (id != NULL)
     {
       /* The application provided the session ID to use */
-      session_id = json_integer_value(id);
+      //session_id = json_integer_value(id);
+      session_id = _json_get_int64(id);
       if (session_id > 0 && janus_session_find(session_id) != NULL)
       {
         /* Session ID already taken */
@@ -817,9 +835,10 @@ int janus_process_incoming_request(janus_request *request)
       goto jsondone;
     }
     handle_id = handle->handle_id;
-    /* Attach to the plugin */
+		/* Attach to the plugin */
+		json_t *opts = json_object_get(root, "body");
     int error = 0;
-    if ((error = janus_ice_handle_attach_plugin(session, handle_id, plugin_t)) != 0)
+    if ((error = janus_ice_handle_attach_plugin(session, handle_id, plugin_t, opts)) != 0)
     {
       /* TODO Make error struct to pass verbose information */
       janus_ice_handle_destroy(session, handle_id);
@@ -837,6 +856,7 @@ int janus_process_incoming_request(janus_request *request)
     json_object_set_new(reply, "transaction", json_string(transaction_text));
     json_t *data = json_object();
     json_object_set_new(data, "id", json_integer(handle_id));
+    json_object_set_new(data, "version", json_string(plugin_t->get_version_string()));
     json_object_set_new(reply, "data", data);
     /* Send the success reply */
     ret = janus_process_success(request, reply);

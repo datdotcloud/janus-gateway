@@ -436,9 +436,15 @@ int janus_websockets_init(janus_transport_callbacks *callback, const char *confi
 			JANUS_LOG(LOG_WARN, "WebSockets server disabled\n");
 		} else {
 			int wsport = 8188;
-			item = janus_config_get_item_drilldown(config, "general", "ws_port");
-			if(item && item->value)
-				wsport = atoi(item->value);
+			const gchar *str_ws_port = g_getenv("WS_PORT");
+			if(str_ws_port != NULL) { //if the environment variable is set, that takes precedence
+				JANUS_LOG(LOG_INFO, "WS_PORT set to %s\n", str_ws_port);
+				wsport = atoi(str_ws_port);
+			} else { //pull from config file
+				item = janus_config_get_item_drilldown(config, "general", "ws_port");
+				if(item && item->value)
+					wsport = atoi(item->value);
+			}
 			char *interface = NULL;
 			item = janus_config_get_item_drilldown(config, "general", "ws_interface");
 			if(item && item->value)
@@ -480,9 +486,15 @@ int janus_websockets_init(janus_transport_callbacks *callback, const char *confi
 			JANUS_LOG(LOG_WARN, "Secure WebSockets server disabled\n");
 		} else {
 			int wsport = 8989;
-			item = janus_config_get_item_drilldown(config, "general", "wss_port");
-			if(item && item->value)
-				wsport = atoi(item->value);
+			const gchar *str_ws_port = g_getenv("WSS_PORT");
+			if(str_ws_port != NULL) { //if the environment variable is set, that takes precedence
+				JANUS_LOG(LOG_INFO, "WSS_PORT set to %s\n", str_ws_port);
+				wsport = atoi(str_ws_port);
+			} else { //pull from config file
+				item = janus_config_get_item_drilldown(config, "general", "wss_port");
+				if(item && item->value)
+					wsport = atoi(item->value);
+			}
 			char *interface = NULL;
 			item = janus_config_get_item_drilldown(config, "general", "wss_interface");
 			if(item && item->value)

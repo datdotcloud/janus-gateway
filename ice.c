@@ -971,7 +971,7 @@ janus_ice_handle *janus_ice_handle_find(void *gateway_session, guint64 handle_id
 	return handle;
 }
 
-gint janus_ice_handle_attach_plugin(void *gateway_session, guint64 handle_id, janus_plugin *plugin) {
+gint janus_ice_handle_attach_plugin(void *gateway_session, guint64 handle_id, janus_plugin *plugin, json_t *opts) {
 	if(gateway_session == NULL)
 		return JANUS_ERROR_SESSION_NOT_FOUND;
 	if(plugin == NULL)
@@ -996,7 +996,7 @@ gint janus_ice_handle_attach_plugin(void *gateway_session, guint64 handle_id, ja
 	session_handle->gateway_handle = handle;
 	session_handle->plugin_handle = NULL;
 	session_handle->stopped = 0;
-	plugin->create_session(session_handle, &error);
+	plugin->create_session(session_handle, &error, opts);
 	if(error) {
 		/* TODO Make error struct to pass verbose information */
 		janus_mutex_unlock(&session->mutex);
