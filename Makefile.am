@@ -322,7 +322,7 @@ plugins_libimpstar_la_SOURCES = plugins/impstar/impstar.c \
   plugins/impstar/Microsoft.Telemetry_apply.cpp \
   plugins/impstar/Microsoft.Telemetry_types.cpp \
   plugins/impstar/Ms_apply.cpp \
-  plugins/impstar/Ms_types.cpp
+  plugins/impstar/Ms_types.cpp \
   plugins/impstar/logging.c \
 	plugins/impstar/health.c \
   plugins/impstar/xpert.c
