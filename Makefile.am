@@ -1,5 +1,4 @@
-ACLOCAL_AMFLAGS = -I m4
-
+ACLOCAL_AMFLAGS = ${ACLOCAL_FLAGS} -I m4
 # FIXME: These flags should be produced in configure.ac using AX_APPEND_COMPILE_FLAGS
 AM_CFLAGS = \
 	-Wall -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations \
@@ -18,6 +17,8 @@ AM_CFLAGS += -Wno-override-init  # we need this for JANUS_PLUGIN_INIT and JANUS_
 # AM_CFLAGS += -Wshadow -Wstrict-aliasing=2
 
 AM_CFLAGS += -fstack-protector-all -g -ggdb -fPIC -rdynamic -pthread
+
+AM_CXXFLAGS = -std=gnu++11
 
 # FIXME: make docs work with distcheck
 DISTCHECK_CONFIGURE_FLAGS = --disable-docs --enable-post-processing
@@ -292,10 +293,12 @@ plugins_libimpstar_la_SOURCES = plugins/impstar/impstar.c \
   plugins/impstar/ingest.c \
   plugins/impstar/ingest_msg.c \
   plugins/impstar/monitor.c \
-  plugins/impstar/logging.c
-plugins_libimpstar_la_CFLAGS = $(plugins_cflags)
-plugins_libimpstar_la_LDFLAGS = $(plugins_ldflags)
-plugins_libimpstar_la_LIBADD = $(plugins_libadd)
+  plugins/impstar/logging.c \
+	plugins/impstar/health.c \
+  plugins/impstar/xpert.c
+plugins_libimpstar_la_CFLAGS = $(plugins_cflags) $(MHD_CFLAGS)
+plugins_libimpstar_la_LDFLAGS = $(plugins_ldflags) $(MHD_LDFLAGS) $(MHD_LIBS)
+plugins_libimpstar_la_LIBADD = $(plugins_libadd) $(MHD_LDFLAGS)
 endif
 
 if ENABLE_PLUGIN_VIDEOCALL
