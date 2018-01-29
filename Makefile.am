@@ -16,7 +16,7 @@ AM_CFLAGS += -Wno-override-init  # we need this for JANUS_PLUGIN_INIT and JANUS_
 # some fairly big refactoring though, which can wait.
 # AM_CFLAGS += -Wshadow -Wstrict-aliasing=2
 
-AM_CFLAGS += -fstack-protector-all -g -ggdb -fPIC -rdynamic -pthread
+AM_CFLAGS += -fstack-protector-all -g -ggdb -fPIC -rdynamic -pthread -luuid
 
 AM_CXXFLAGS = -std=gnu++11
 
