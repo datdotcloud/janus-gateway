@@ -294,10 +294,10 @@ plugins_libimpstar_la_SOURCES = plugins/impstar/impstar.c \
   plugins/impstar/ingest_msg.c \
   plugins/impstar/monitor.c \
   plugins/impstar/logging.c \
-	plugins/impstar/health.c \
-  plugins/impstar/xpert.c \
+  plugins/impstar/health.c \
+  plugins/impstar/session_stats.c \
   plugins/impstar/rtcp.c \
-	plugins/impstar/auto_bw.c
+  plugins/impstar/xpert.c
 plugins_libimpstar_la_CFLAGS = $(plugins_cflags) $(MHD_CFLAGS)
 plugins_libimpstar_la_LDFLAGS = $(plugins_ldflags) $(MHD_LDFLAGS) $(MHD_LIBS)
 plugins_libimpstar_la_LIBADD = $(plugins_libadd) $(MHD_LDFLAGS)

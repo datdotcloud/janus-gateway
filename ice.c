@@ -2139,8 +2139,11 @@ void janus_ice_cb_nice_recv(NiceAgent *agent, guint stream_id, guint component_i
 						list = list->next;
 					}
 					component->retransmit_recent_cnt += retransmits_cnt;
+
+					// Mixer Edit: Quinn - We don't want to remove the nacks from the buffer
+					// so we can use them for logic.
 					/* FIXME Remove the NACK compound packet, we've handled it */
-					buflen = janus_rtcp_remove_nacks(buf, buflen);
+					//buflen = janus_rtcp_remove_nacks(buf, buflen);
 					/* Update stats */
 					if(video) {
 						component->in_stats.video_nacks += nacks_count;

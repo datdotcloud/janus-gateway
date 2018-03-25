@@ -622,7 +622,7 @@ GSList *janus_rtcp_get_nacks(char *packet, int len) {
 				rtcp_fb *rtcpfb = (rtcp_fb *)rtcp;
 				int nacks = ntohs(rtcp->length)-2;	/* Skip SSRCs */
 				if(nacks > 0) {
-					JANUS_LOG(LOG_DBG, "        Got %d nacks\n", nacks);
+					JANUS_LOG(LOG_ERR, "        Got %d nacks\n", nacks);
 					rtcp_nack *nack = NULL;
 					uint16_t pid = 0;
 					uint16_t blp = 0;

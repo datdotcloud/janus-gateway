@@ -47,3 +47,4 @@ Makefile.in
 
 .deps
 .dirstamp
+/.vs/*
