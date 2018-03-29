@@ -295,7 +295,7 @@ plugins_libimpstar_la_SOURCES = plugins/impstar/impstar.c \
   plugins/impstar/monitor.c \
   plugins/impstar/logging.c \
   plugins/impstar/health.c \
-  plugins/impstar/session_stats.c \
+  plugins/impstar/stats.c \
   plugins/impstar/rtcp.c \
   plugins/impstar/xpert.c
 plugins_libimpstar_la_CFLAGS = $(plugins_cflags) $(MHD_CFLAGS)
