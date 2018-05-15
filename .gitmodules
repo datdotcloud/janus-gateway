@@ -1,6 +1,0 @@
-[submodule "plugins/impstar"]
-	path = plugins/impstar
-	url = https://github.com/mixer/impstar_janus_plugin.git
-[submodule "plugins\\impstar"]
-	path = plugins\\impstar
-	url = https://github.com/mixer/impstar_janus_plugin.git
